@@ -28,3 +28,9 @@ Thumbs.db
 
 # User config (stored in ~/.tikatak-codex/, NOT in repo)
 # API keys are never in the project directory
+
+# Internal development docs (not for public repo)
+进度跟踪.md
+可实现功能总表.md
+项目启动计划.md
+自定义提供商改造计划书.md
