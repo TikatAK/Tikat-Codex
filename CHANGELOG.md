@@ -4,6 +4,13 @@
 
 ---
 
+## [1.0.2] - 2026-04-01
+
+### 修复
+- **Windows 自动更新失败**：`codex update` 报 `spawn npm ENOENT`。原因是 Windows 上 npm 是批处理脚本 `npm.cmd`，无法直接被 `execFile` 调用。现已自动识别平台，Windows 使用 `npm.cmd`，Linux/macOS 使用 `npm`
+
+---
+
 ## [1.0.1] - 2026-04-01
 
 ### 新增
