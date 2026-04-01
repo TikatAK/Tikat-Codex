@@ -314,10 +314,26 @@ async function handleSlashCommand(
     case '/provider':
       await providerCommand(args[0])
       break
+    case '/update':
+      setState(s => ({ ...s, info: '⏳ 正在检查更新...' }))
+      {
+        const { checkForUpdates } = await import('../utils/updater.js')
+        const VERSION = process.env['npm_package_version'] ?? '0.1.0'
+        const info = await checkForUpdates(VERSION)
+        if (!info.hasUpdate) {
+          setState(s => ({ ...s, info: `✅ 已是最新版本 v${info.latestVersion}` }))
+        } else {
+          setState(s => ({
+            ...s,
+            info: `💡 新版本可用 v${info.currentVersion} → v${info.latestVersion}，退出后运行 codex update 更新`,
+          }))
+        }
+      }
+      break
     case '/help':
       setState(s => ({
         ...s,
-        info: '/provider [set|status|test|list]  /model <id>  /clear  /exit',
+        info: '/provider [set|status|test|list]  /model <id>  /update  /clear  /exit',
       }))
       break
     default:

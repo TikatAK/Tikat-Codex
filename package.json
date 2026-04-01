@@ -14,7 +14,11 @@
     "build": "node build.mjs",
     "dev": "node build.mjs --watch",
     "start": "node dist/cli.js",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "release": "npm run build && npm install -g .",
+    "release:patch": "npm run build && npm version patch && git add -A && git push && git push --tags && npm install -g .",
+    "release:minor": "npm run build && npm version minor && git add -A && git push && git push --tags && npm install -g .",
+    "release:major": "npm run build && npm version major && git add -A && git push && git push --tags && npm install -g ."
   },
   "dependencies": {
     "@commander-js/extra-typings": "^13.1.0",
