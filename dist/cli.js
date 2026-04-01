@@ -56974,7 +56974,7 @@ var init_SubAgentTool = __esm({
     init_claude();
     init_toolExecutor();
     init_tools();
-    MAX_TOOL_ROUNDS = 10;
+    MAX_TOOL_ROUNDS = 20;
     inputSchema10 = external_exports.object({
       task: external_exports.string().describe("The task to perform. Be specific and self-contained."),
       context: external_exports.string().optional().describe("Additional context or files to be aware of.")
@@ -57639,7 +57639,7 @@ async function handleSlashCommand(cmd, _state, setState, exit) {
       setState((s2) => ({ ...s2, info: "\u23F3 \u6B63\u5728\u68C0\u67E5\u66F4\u65B0..." }));
       {
         const { checkForUpdates: checkForUpdates2 } = await Promise.resolve().then(() => (init_updater(), updater_exports));
-        const VERSION3 = "1.0.6";
+        const VERSION3 = "1.0.7";
         const info = await checkForUpdates2(VERSION3);
         if (!info.hasUpdate) {
           setState((s2) => ({ ...s2, info: `\u2705 \u5DF2\u662F\u6700\u65B0\u7248\u672C v${info.latestVersion}` }));
@@ -57672,7 +57672,7 @@ var init_repl = __esm({
     await init_provider();
     init_cwd();
     import_jsx_runtime3 = __toESM(require_jsx_runtime(), 1);
-    MAX_TOOL_ROUNDS2 = 20;
+    MAX_TOOL_ROUNDS2 = 50;
     SYSTEM_PROMPT = `You are TikatAK-Codex, an expert AI coding assistant.
 You have access to tools to read files, write files, run bash commands, search code, and browse the web.
 Always use tools to actually perform tasks rather than just describing what to do.
@@ -57703,7 +57703,7 @@ init_activeProvider();
 await init_provider();
 init_claude();
 init_updater();
-var VERSION2 = "1.0.6";
+var VERSION2 = "1.0.7";
 async function silentUpdateCheck() {
   try {
     const info = await checkForUpdates(VERSION2);

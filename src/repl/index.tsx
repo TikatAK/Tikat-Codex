@@ -7,7 +7,7 @@ import { getCwd } from '../utils/cwd.js'
 import type { AnthropicMessage, AnthropicBlock } from '../adapters/openai/index.js'
 import type { AnthropicToolUseBlock } from '../adapters/openai/responseAdapter.js'
 
-const MAX_TOOL_ROUNDS = 20
+const MAX_TOOL_ROUNDS = 50
 const SYSTEM_PROMPT = `You are TikatAK-Codex, an expert AI coding assistant.
 You have access to tools to read files, write files, run bash commands, search code, and browse the web.
 Always use tools to actually perform tasks rather than just describing what to do.

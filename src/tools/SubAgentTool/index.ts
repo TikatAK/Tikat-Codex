@@ -6,7 +6,7 @@ import { SUB_AGENT_TOOL_SCHEMAS } from '../index.js'
 import type { AnthropicMessage, AnthropicBlock, AnthropicTool } from '../../adapters/openai/index.js'
 import type { AnthropicToolUseBlock } from '../../adapters/openai/responseAdapter.js'
 
-const MAX_TOOL_ROUNDS = 10
+const MAX_TOOL_ROUNDS = 20
 
 const inputSchema = z.object({
   task: z.string().describe('The task to perform. Be specific and self-contained.'),
