@@ -4,6 +4,9 @@
 
 > 基于 Claude Code 2.1.88 的架构理念重写，支持 DeepSeek、OpenAI、Kimi、通义千问、GLM、Mistral、Gemini、Ollama 等任意兼容 OpenAI API 的提供商。
 
+[![GitHub release](https://img.shields.io/github/v/release/TikatAK/TikatAK-Codex)](https://github.com/TikatAK/TikatAK-Codex/releases)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 ---
 
 ## 快速开始
@@ -11,13 +14,13 @@
 ### 安装
 
 ```bash
-# 方式一：从源码构建
-git clone <this-repo>
-cd TikatAK-Codex
-npm install
-npm run build
+# 方式一：从 GitHub 全局安装（推荐）
+npm install -g github:TikatAK/TikatAK-Codex
 
-# 全局安装（可选）
+# 方式二：克隆源码本地安装
+git clone https://github.com/TikatAK/TikatAK-Codex.git
+cd TikatAK-Codex
+npm install && npm run build
 npm install -g .
 ```
 
@@ -25,38 +28,38 @@ npm install -g .
 
 ```bash
 # 启动后自动引导配置提供商
-node dist/cli.js
+codex
 
-# 或手动配置
-node dist/cli.js provider set
+# 或手动进入配置界面
+codex provider set
 ```
 
-### 直接使用环境变量（免配置）
+### 使用环境变量（免配置，适合 CI/脚本）
 
 ```bash
 export CODEX_BASE_URL=https://api.deepseek.com/v1
 export CODEX_API_KEY=sk-xxxx
-export CODEX_MODEL=deepseek-coder
+export CODEX_MODEL=deepseek-chat
 
-node dist/cli.js
+codex
 ```
 
 ---
 
 ## 支持的提供商
 
-| 提供商 | ID | Base URL |
-|--------|-----|----------|
-| DeepSeek | `deepseek` | `https://api.deepseek.com/v1` |
-| OpenAI | `openai` | `https://api.openai.com/v1` |
-| Kimi (月之暗面) | `kimi` | `https://api.moonshot.cn/v1` |
-| 通义千问 | `qwen` | `https://dashscope.aliyuncs.com/compatible-mode/v1` |
-| 智谱 GLM | `glm` | `https://open.bigmodel.cn/api/paas/v4` |
-| Mistral | `mistral` | `https://api.mistral.ai/v1` |
-| Gemini | `gemini` | `https://generativelanguage.googleapis.com/v1beta/openai` |
-| Ollama (本地) | `ollama` | `http://localhost:11434/v1` |
-| LM Studio (本地) | `lmstudio` | `http://localhost:1234/v1` |
-| 自定义端点 | `custom` | 任意 URL |
+| 提供商 | Base URL |
+|--------|----------|
+| DeepSeek | `https://api.deepseek.com/v1` |
+| OpenAI | `https://api.openai.com/v1` |
+| Kimi (月之暗面) | `https://api.moonshot.cn/v1` |
+| 通义千问 | `https://dashscope.aliyuncs.com/compatible-mode/v1` |
+| 智谱 GLM | `https://open.bigmodel.cn/api/paas/v4` |
+| Mistral | `https://api.mistral.ai/v1` |
+| Gemini | `https://generativelanguage.googleapis.com/v1beta/openai` |
+| Ollama (本地) | `http://localhost:11434/v1` |
+| LM Studio (本地) | `http://localhost:1234/v1` |
+| 自定义端点 | 任意 URL |
 
 ---
 
@@ -70,7 +73,7 @@ codex
 codex "帮我重构 src/auth.ts"
 
 # 非交互式（输出结果后退出）
-codex -p "解释这段代码" 
+codex -p "解释这段代码"
 
 # 指定模型
 codex -m deepseek-coder-v2
@@ -80,6 +83,9 @@ codex provider set       # 可视化配置
 codex provider status    # 查看当前配置
 codex provider test      # 测试连接
 codex provider list      # 列出所有预设
+
+# 检查并更新版本
+codex update
 ```
 
 ### REPL 内斜杠命令
@@ -88,6 +94,7 @@ codex provider list      # 列出所有预设
 |------|------|
 | `/provider [set\|status\|test\|list]` | 管理提供商 |
 | `/model <model-id>` | 切换模型 |
+| `/update` | 检查是否有新版本 |
 | `/clear` | 清除对话历史 |
 | `/help` | 显示帮助 |
 | `/exit` | 退出 |
@@ -100,16 +107,30 @@ AI 在回答时可自动调用以下工具：
 
 | 工具 | 功能 |
 |------|------|
-| `Bash` | 执行 shell 命令 |
-| `FileRead` | 读取文件（支持分页） |
+| `Bash` | 执行 shell 命令（Windows/Unix 自适应）|
+| `FileRead` | 读取文件（支持分页，大文件保护）|
 | `FileEdit` | 精确字符串替换编辑文件 |
 | `FileWrite` | 写入/覆盖整个文件 |
-| `Grep` | 正则搜索代码 |
+| `Grep` | 正则搜索代码（无需安装 rg）|
 | `Glob` | 文件模式匹配 |
 | `LS` | 列出目录结构 |
 | `WebFetch` | 抓取网页内容 |
 | `TodoWrite/Read` | 任务跟踪 |
 | `SubAgent` | 派发子任务给独立 Agent |
+
+---
+
+## 版本管理
+
+```bash
+# 检查是否有新版本（也会在每次启动时后台自动检查）
+codex update
+
+# 开发者发布新版本
+npm run release:patch   # bug 修复  x.x.0 → x.x.1
+npm run release:minor   # 新功能    x.0.x → x.1.x
+npm run release:major   # 大版本    0.x.x → 1.x.x
+```
 
 ---
 
@@ -121,7 +142,7 @@ src/
 ├── repl/                 # 交互式 REPL (React + Ink TUI)
 ├── providers/            # 提供商抽象层
 │   ├── types.ts          # ProviderConfig 接口
-│   ├── registry.ts       # 9 个内置预设
+│   ├── registry.ts       # 内置预设列表
 │   ├── client.ts         # OpenAI SDK 工厂
 │   └── activeProvider.ts # 加载当前配置
 ├── adapters/openai/      # 消息格式转换
@@ -130,12 +151,12 @@ src/
 │   └── streamAdapter.ts  # SSE 流转换
 ├── services/api/         # API 调用层
 │   ├── claude.ts         # sendMessage / sendMessageStream
-│   ├── toolExecutor.ts   # 工具并行执行
+│   ├── toolExecutor.ts   # 工具并行执行（带超时保护）
 │   └── withRetry.ts      # 指数退避重试
 ├── tools/                # 工具实现
-├── commands/provider/    # /provider 命令
+├── commands/             # CLI 子命令
 ├── components/           # Ink UI 组件
-└── utils/                # 工具函数
+└── utils/                # 工具函数（含 updater）
 ```
 
 ---
@@ -143,20 +164,30 @@ src/
 ## 配置文件位置
 
 - 设置: `~/.tikatak-codex/settings.json`
-- API Key: `~/.tikatak-codex/apikey` (权限 0600)
+- API Key: `~/.tikatak-codex/apikey`（权限 0600，仅当前用户可读）
 
 ---
 
 ## 开发
 
 ```bash
-npm run dev       # 监听模式构建
-npm run typecheck # 类型检查
-npm run build     # 生产构建
+npm run build       # 生产构建
+npm run dev         # 监听模式构建
+npm run typecheck   # TypeScript 类型检查
+
+# 本地测试（不影响全局 codex）
+node dist/cli.js
 ```
+
+---
+
+## 更新日志
+
+详见 [CHANGELOG.md](CHANGELOG.md)
 
 ---
 
 ## License
 
 MIT
+
