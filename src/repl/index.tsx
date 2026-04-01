@@ -318,7 +318,7 @@ async function handleSlashCommand(
       setState(s => ({ ...s, info: '⏳ 正在检查更新...' }))
       {
         const { checkForUpdates } = await import('../utils/updater.js')
-        const VERSION = process.env['npm_package_version'] ?? '0.1.0'
+        const VERSION = process.env['TIKATAK_VERSION'] ?? '0.1.0'
         const info = await checkForUpdates(VERSION)
         if (!info.hasUpdate) {
           setState(s => ({ ...s, info: `✅ 已是最新版本 v${info.latestVersion}` }))

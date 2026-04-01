@@ -4,6 +4,13 @@
 
 ---
 
+## [1.0.5] - 2026-04-01
+
+### 修复
+- **版本号始终显示 0.1.0**：`main.tsx` 和 `repl/index.tsx` 读取的环境变量名 `npm_package_version` 与 `build.mjs` 注入的 `TIKATAK_VERSION` 不一致，导致 fallback 到硬编码的 `0.1.0`。现统一使用 `TIKATAK_VERSION`
+
+---
+
 ## [1.0.4] - 2026-04-01
 
 ### 修复

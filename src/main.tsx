@@ -5,7 +5,7 @@ import { providerCommand } from './commands/provider/index.js'
 import { sendMessageStream } from './services/api/claude.js'
 import { checkForUpdates } from './utils/updater.js'
 
-const VERSION = process.env['npm_package_version'] ?? '0.1.0'
+const VERSION = process.env['TIKATAK_VERSION'] ?? '0.1.0'
 
 /** Silent background update check — shows a one-line hint if update is available */
 async function silentUpdateCheck(): Promise<void> {
