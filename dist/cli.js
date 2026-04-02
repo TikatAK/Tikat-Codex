@@ -56371,6 +56371,12 @@ Current directory: ${context.cwd}`,
         }
         try {
           const fileStat = await stat(filePath);
+          if (fileStat.isDirectory()) {
+            return {
+              content: `Path is a directory, not a file: ${input.file_path}. Use LS tool to list directory contents.`,
+              isError: true
+            };
+          }
           if (fileStat.size > MAX_FILE_BYTES) {
             return {
               content: `File too large to read: ${input.file_path} (${(fileStat.size / 1024 / 1024).toFixed(1)} MB). Use offset/limit params to read specific lines.`,
@@ -56463,11 +56469,10 @@ ${input.old_string}`,
           }
           const newContent = content.replace(input.old_string, () => input.new_string);
           writeFileSync2(filePath, newContent, "utf8");
-          const linesChanged = Math.abs(
-            input.new_string.split("\n").length - input.old_string.split("\n").length
-          );
+          const lineDelta = input.new_string.split("\n").length - input.old_string.split("\n").length;
+          const lineInfo = lineDelta !== 0 ? ` (${lineDelta > 0 ? "+" : ""}${lineDelta} lines)` : "";
           return {
-            content: `Successfully edited ${input.file_path}${linesChanged > 0 ? ` (${linesChanged > 0 ? "+" : ""}${linesChanged} lines)` : ""}`
+            content: `Successfully edited ${input.file_path}${lineInfo}`
           };
         } catch (err) {
           return { content: `Error editing file: ${String(err)}`, isError: true };
@@ -57336,6 +57341,40 @@ var init_updater = __esm({
   }
 });
 
+// src/utils/cwd.ts
+var cwd_exports = {};
+__export(cwd_exports, {
+  getCwd: () => getCwd,
+  setCwd: () => setCwd2
+});
+import { resolve } from "path";
+function getCwd() {
+  return _cwd;
+}
+function setCwd2(dir) {
+  _cwd = resolve(dir);
+}
+var _cwd;
+var init_cwd = __esm({
+  "src/utils/cwd.ts"() {
+    "use strict";
+    _cwd = process.cwd();
+  }
+});
+
+// src/constants/prompts.ts
+var BASE_SYSTEM_PROMPT;
+var init_prompts = __esm({
+  "src/constants/prompts.ts"() {
+    "use strict";
+    init_cwd();
+    BASE_SYSTEM_PROMPT = `You are Tikat-Codex, an expert AI coding assistant.
+You have access to tools to read files, write files, run bash commands, search code, and browse the web.
+Always use tools to actually perform tasks rather than just describing what to do.
+Current working directory will be provided in each request.`;
+  }
+});
+
 // src/commands/update/index.tsx
 var update_exports = {};
 __export(update_exports, {
@@ -57563,27 +57602,6 @@ var init_diagnose = __esm({
     init_source();
     init_activeProvider();
     init_client();
-  }
-});
-
-// src/utils/cwd.ts
-var cwd_exports = {};
-__export(cwd_exports, {
-  getCwd: () => getCwd,
-  setCwd: () => setCwd2
-});
-import { resolve } from "path";
-function getCwd() {
-  return _cwd;
-}
-function setCwd2(dir) {
-  _cwd = resolve(dir);
-}
-var _cwd;
-var init_cwd = __esm({
-  "src/utils/cwd.ts"() {
-    "use strict";
-    _cwd = process.cwd();
   }
 });
 
@@ -58000,7 +58018,7 @@ function ReplApp({ initialPrompt, model: initialModel, resumeSessionId }) {
         }
         const streamGen = sendMessageStream({
           messages: compressedMessages,
-          system: `${SYSTEM_PROMPT}
+          system: `${BASE_SYSTEM_PROMPT}
 Working directory: ${cwd2}`,
           model: currentState.model
         });
@@ -58233,7 +58251,7 @@ async function handleSlashCommand(cmd, _state, setState, exit) {
       setState((s2) => ({ ...s2, info: "\u23F3 \u6B63\u5728\u68C0\u67E5\u66F4\u65B0..." }));
       {
         const { checkForUpdates: checkForUpdates2 } = await Promise.resolve().then(() => (init_updater(), updater_exports));
-        const VERSION3 = "1.3.3";
+        const VERSION3 = "1.3.4";
         const info = await checkForUpdates2(VERSION3);
         if (!info.hasUpdate) {
           setState((s2) => ({ ...s2, info: `\u2705 \u5DF2\u662F\u6700\u65B0\u7248\u672C v${info.latestVersion}` }));
@@ -58334,7 +58352,7 @@ async function handleSlashCommand(cmd, _state, setState, exit) {
       setState((s2) => ({ ...s2, info: `\u672A\u77E5\u547D\u4EE4: ${command}\uFF0C\u8F93\u5165 /help \u67E5\u770B\u5E2E\u52A9` }));
   }
 }
-var import_react25, import_jsx_runtime3, MAX_TOOL_ROUNDS2, SYSTEM_PROMPT;
+var import_react25, import_jsx_runtime3, MAX_TOOL_ROUNDS2;
 var init_repl = __esm({
   async "src/repl/index.tsx"() {
     "use strict";
@@ -58347,12 +58365,9 @@ var init_repl = __esm({
     init_sessions2();
     init_context();
     init_highlight();
+    init_prompts();
     import_jsx_runtime3 = __toESM(require_jsx_runtime(), 1);
     MAX_TOOL_ROUNDS2 = 50;
-    SYSTEM_PROMPT = `You are Tikat-Codex, an expert AI coding assistant.
-You have access to tools to read files, write files, run bash commands, search code, and browse the web.
-Always use tools to actually perform tasks rather than just describing what to do.
-Current working directory will be provided in each request.`;
   }
 });
 
@@ -58379,7 +58394,8 @@ init_activeProvider();
 await init_provider();
 init_claude();
 init_updater();
-var VERSION2 = "1.3.3";
+init_prompts();
+var VERSION2 = "1.3.4";
 async function silentUpdateCheck() {
   try {
     const info = await checkForUpdates(VERSION2);
@@ -58427,10 +58443,6 @@ async function runNonInteractive(prompt, model) {
   const { getCwd: getCwd2 } = await Promise.resolve().then(() => (init_cwd(), cwd_exports));
   const { compressContext: compressContext2 } = await Promise.resolve().then(() => (init_context(), context_exports));
   const cwd2 = getCwd2();
-  const SYSTEM_PROMPT2 = `You are Tikat-Codex, an expert AI coding assistant.
-You have access to tools to read files, write files, run bash commands, search code, and browse the web.
-Always use tools to actually perform tasks rather than just describing what to do.
-Current working directory will be provided in each request.`;
   const MAX_ROUNDS = 50;
   let messages = [
     { role: "user", content: prompt }
@@ -58440,7 +58452,7 @@ Current working directory will be provided in each request.`;
       const { messages: compressed } = compressContext2(messages);
       const stream = sendMessageStream({
         messages: compressed,
-        system: `${SYSTEM_PROMPT2}
+        system: `${BASE_SYSTEM_PROMPT}
 Working directory: ${cwd2}`,
         ...model !== void 0 ? { model } : {}
       });
@@ -58454,8 +58466,6 @@ Working directory: ${cwd2}`,
         } else if (event.type === "content_block_start" && event.content_block.type === "tool_use") {
           const tb = event.content_block;
           toolAccumulator.set(event.index, { id: tb.id, name: tb.name, argsJson: "" });
-          process.stderr.write(source_default.yellow(`
-\u{1F527} ${tb.name}...`));
         } else if (event.type === "content_block_delta" && event.delta.type === "input_json_delta") {
           const acc = toolAccumulator.get(event.index);
           if (acc) acc.argsJson += event.delta.partial_json;
@@ -58489,8 +58499,7 @@ Working directory: ${cwd2}`,
       const results = await executeTools2(toolUseBlocks, { cwd: cwd2, signal: void 0 });
       for (const r2 of results) {
         const icon = r2.is_error ? source_default.red("\u2717") : source_default.green("\u2713");
-        process.stderr.write(` ${icon}
-`);
+        process.stderr.write(source_default.yellow(`\u{1F527} ${r2.name}... `) + icon + "\n");
       }
       messages = [
         ...messages,

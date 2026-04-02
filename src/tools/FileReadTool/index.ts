@@ -37,6 +37,12 @@ export const FileReadTool: ToolDef<Input, string> = {
     try {
       // Reject huge files before loading into memory
       const fileStat = await stat(filePath)
+      if (fileStat.isDirectory()) {
+        return {
+          content: `Path is a directory, not a file: ${input.file_path}. Use LS tool to list directory contents.`,
+          isError: true,
+        }
+      }
       if (fileStat.size > MAX_FILE_BYTES) {
         return {
           content: `File too large to read: ${input.file_path} (${(fileStat.size / 1024 / 1024).toFixed(1)} MB). Use offset/limit params to read specific lines.`,

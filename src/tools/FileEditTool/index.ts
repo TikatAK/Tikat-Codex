@@ -65,11 +65,10 @@ export const FileEditTool: ToolDef<Input, string> = {
       const newContent = content.replace(input.old_string, () => input.new_string)
       writeFileSync(filePath, newContent, 'utf8')
 
-      const linesChanged = Math.abs(
-        input.new_string.split('\n').length - input.old_string.split('\n').length,
-      )
+      const lineDelta = input.new_string.split('\n').length - input.old_string.split('\n').length
+      const lineInfo = lineDelta !== 0 ? ` (${lineDelta > 0 ? '+' : ''}${lineDelta} lines)` : ''
       return {
-        content: `Successfully edited ${input.file_path}${linesChanged > 0 ? ` (${linesChanged > 0 ? '+' : ''}${linesChanged} lines)` : ''}`,
+        content: `Successfully edited ${input.file_path}${lineInfo}`,
       }
     } catch (err) {
       return { content: `Error editing file: ${String(err)}`, isError: true }

@@ -7,14 +7,11 @@ import { getCwd } from '../utils/cwd.js'
 import { saveSession, loadSession, listSessions, deleteSession } from '../utils/sessions/index.js'
 import { compressContext, estimateTokens } from '../utils/context/index.js'
 import { highlight } from '../utils/highlight/index.js'
+import { BASE_SYSTEM_PROMPT } from '../constants/prompts.js'
 import type { AnthropicMessage, AnthropicBlock } from '../adapters/openai/index.js'
 import type { AnthropicToolUseBlock, AnthropicTextBlock } from '../adapters/openai/responseAdapter.js'
 
 const MAX_TOOL_ROUNDS = 50
-const SYSTEM_PROMPT = `You are Tikat-Codex, an expert AI coding assistant.
-You have access to tools to read files, write files, run bash commands, search code, and browse the web.
-Always use tools to actually perform tasks rather than just describing what to do.
-Current working directory will be provided in each request.`
 
 interface ReplOptions {
   initialPrompt?: string
@@ -114,7 +111,7 @@ function ReplApp({ initialPrompt, model: initialModel, resumeSessionId }: ReplOp
         // ── Consume stream and reconstruct response ──────────────────────
         const streamGen = sendMessageStream({
           messages: compressedMessages,
-          system: `${SYSTEM_PROMPT}\nWorking directory: ${cwd}`,
+          system: `${BASE_SYSTEM_PROMPT}\nWorking directory: ${cwd}`,
           model: currentState.model,
         })
 

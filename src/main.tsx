@@ -4,6 +4,7 @@ import { isProviderConfigured } from './providers/activeProvider.js'
 import { providerCommand } from './commands/provider/index.js'
 import { sendMessageStream } from './services/api/claude.js'
 import { checkForUpdates } from './utils/updater.js'
+import { BASE_SYSTEM_PROMPT } from './constants/prompts.js'
 
 const VERSION = process.env['TIKAT_VERSION'] ?? '0.1.0'
 
@@ -84,11 +85,6 @@ async function runNonInteractive(prompt: string, model?: string): Promise<void> 
   const { compressContext } = await import('./utils/context/index.js')
   const cwd = getCwd()
 
-  const SYSTEM_PROMPT = `You are Tikat-Codex, an expert AI coding assistant.
-You have access to tools to read files, write files, run bash commands, search code, and browse the web.
-Always use tools to actually perform tasks rather than just describing what to do.
-Current working directory will be provided in each request.`
-
   const MAX_ROUNDS = 50
   let messages: import('./adapters/openai/index.js').AnthropicMessage[] = [
     { role: 'user', content: prompt },
@@ -100,7 +96,7 @@ Current working directory will be provided in each request.`
 
       const stream = sendMessageStream({
         messages: compressed,
-        system: `${SYSTEM_PROMPT}\nWorking directory: ${cwd}`,
+        system: `${BASE_SYSTEM_PROMPT}\nWorking directory: ${cwd}`,
         ...(model !== undefined ? { model } : {}),
       })
 
@@ -115,7 +111,6 @@ Current working directory will be provided in each request.`
         } else if (event.type === 'content_block_start' && event.content_block.type === 'tool_use') {
           const tb = event.content_block
           toolAccumulator.set(event.index, { id: tb.id, name: tb.name, argsJson: '' })
-          process.stderr.write(chalk.yellow(`\n🔧 ${tb.name}...`))
         } else if (event.type === 'content_block_delta' && event.delta.type === 'input_json_delta') {
           const acc = toolAccumulator.get(event.index)
           if (acc) acc.argsJson += event.delta.partial_json
@@ -148,7 +143,7 @@ Current working directory will be provided in each request.`
       const results = await executeTools(toolUseBlocks, { cwd, signal: undefined })
       for (const r of results) {
         const icon = r.is_error ? chalk.red('✗') : chalk.green('✓')
-        process.stderr.write(` ${icon}\n`)
+        process.stderr.write(chalk.yellow(`🔧 ${r.name}... `) + icon + '\n')
       }
 
       // Append to history
