@@ -87,7 +87,7 @@ async function runNonInteractive(prompt: string, model?: string): Promise<void> 
   const cwd = getCwd()
 
   const systemPrompt = buildSystemPrompt({
-    claudeMd: readProjectInstructions(cwd) ?? undefined,
+    projectInstructions: readProjectInstructions(cwd) ?? undefined,
     gitContext: getGitContext(cwd) ?? undefined,
     envInfo: getEnvContext(),
   })

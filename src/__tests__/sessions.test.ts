@@ -29,11 +29,11 @@ const msg = (content: string): AnthropicMessage => ({ role: 'user', content })
 
 afterAll(() => {
   // Clean up the temp directory
-  const sessionsDir = path.join(TEST_HOME, '.Tikat-Codex', 'sessions')
+  const sessionsDir = path.join(TEST_HOME, '.tikat-codex', 'sessions')
   if (fs.existsSync(sessionsDir)) {
     fs.rmSync(sessionsDir, { recursive: true, force: true })
   }
-  const configDir = path.join(TEST_HOME, '.Tikat-Codex')
+  const configDir = path.join(TEST_HOME, '.tikat-codex')
   if (fs.existsSync(configDir)) {
     fs.rmSync(configDir, { recursive: true, force: true })
   }
@@ -46,7 +46,7 @@ describe('sessions', () => {
     expect(meta.messageCount).toBe(1)
     expect(meta.model).toBe('gpt-4')
     expect(meta.title).toBe('hello')
-    const sessionsDir = path.join(TEST_HOME, '.Tikat-Codex', 'sessions')
+    const sessionsDir = path.join(TEST_HOME, '.tikat-codex', 'sessions')
     expect(fs.existsSync(path.join(sessionsDir, `${meta.id}.json`))).toBe(true)
   })
 
@@ -79,7 +79,7 @@ describe('sessions', () => {
 
   it('saveSession with same id updates rather than creates a new file', () => {
     const first = saveSession(null, [msg('original')])
-    const sessionsDir = path.join(TEST_HOME, '.Tikat-Codex', 'sessions')
+    const sessionsDir = path.join(TEST_HOME, '.tikat-codex', 'sessions')
     const filesBefore = fs.readdirSync(sessionsDir).length
 
     const updated = saveSession(first.id, [msg('updated1'), msg('updated2')])

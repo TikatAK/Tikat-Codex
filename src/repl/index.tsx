@@ -55,9 +55,9 @@ function ReplApp({ initialPrompt, model: initialModel, resumeSessionId }: ReplOp
   const { exit } = useApp()
   const cwd = getCwd()
 
-  // Build system prompt once with git context, CLAUDE.md, and env info
+  // Build system prompt once with git context, TIKAT.md, and env info
   const systemPrompt = buildSystemPrompt({
-    claudeMd: readProjectInstructions(cwd) ?? undefined,
+    projectInstructions: readProjectInstructions(cwd) ?? undefined,
     gitContext: getGitContext(cwd) ?? undefined,
     envInfo: getEnvContext(),
   })

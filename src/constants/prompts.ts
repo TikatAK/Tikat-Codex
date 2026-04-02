@@ -7,12 +7,12 @@ import { getCwd } from '../utils/cwd.js'
 export function buildSystemPrompt(extra?: {
   gitContext?: string
   /** Contents of TIKAT.md / CODEX.md project instructions file */
-  claudeMd?: string
+  projectInstructions?: string
   envInfo?: string
 }): string {
   const sections: string[] = [BASE_SYSTEM_PROMPT]
-  if (extra?.claudeMd) {
-    sections.push(`# Project Instructions (from TIKAT.md)\n\n${extra.claudeMd}`)
+  if (extra?.projectInstructions) {
+    sections.push(`# Project Instructions (from TIKAT.md)\n\n${extra.projectInstructions}`)
   }
   if (extra?.gitContext) {
     sections.push(extra.gitContext)

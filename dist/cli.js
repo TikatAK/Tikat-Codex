@@ -56893,7 +56893,7 @@ function readTodos() {
   }
 }
 function writeTodos(todos) {
-  mkdirSync3(join8(homedir2(), ".Tikat-Codex"), { recursive: true });
+  mkdirSync3(join8(homedir2(), ".tikat-codex"), { recursive: true });
   writeFileSync4(TODO_FILE, JSON.stringify(todos, null, 2), "utf8");
 }
 var TODO_FILE, inputSchema9, TodoWriteTool, TodoReadTool;
@@ -56901,7 +56901,7 @@ var init_TodoWriteTool = __esm({
   "src/tools/TodoWriteTool/index.ts"() {
     "use strict";
     init_zod();
-    TODO_FILE = join8(homedir2(), ".Tikat-Codex", "todos.json");
+    TODO_FILE = join8(homedir2(), ".tikat-codex", "todos.json");
     inputSchema9 = external_exports.object({
       todos: external_exports.array(external_exports.object({
         id: external_exports.string(),
@@ -57040,10 +57040,10 @@ var init_cwd = __esm({
 // src/constants/prompts.ts
 function buildSystemPrompt(extra) {
   const sections = [BASE_SYSTEM_PROMPT];
-  if (extra?.claudeMd) {
+  if (extra?.projectInstructions) {
     sections.push(`# Project Instructions (from TIKAT.md)
 
-${extra.claudeMd}`);
+${extra.projectInstructions}`);
   }
   if (extra?.gitContext) {
     sections.push(extra.gitContext);
@@ -58174,7 +58174,7 @@ function ReplApp({ initialPrompt, model: initialModel, resumeSessionId }) {
   const { exit } = use_app_default();
   const cwd2 = getCwd();
   const systemPrompt = buildSystemPrompt({
-    claudeMd: readProjectInstructions(cwd2) ?? void 0,
+    projectInstructions: readProjectInstructions(cwd2) ?? void 0,
     gitContext: getGitContext(cwd2) ?? void 0,
     envInfo: getEnvContext()
   });
@@ -58647,7 +58647,7 @@ async function runNonInteractive(prompt, model) {
   const { compressContext: compressContext2 } = await Promise.resolve().then(() => (init_context(), context_exports));
   const cwd2 = getCwd2();
   const systemPrompt = buildSystemPrompt({
-    claudeMd: readProjectInstructions(cwd2) ?? void 0,
+    projectInstructions: readProjectInstructions(cwd2) ?? void 0,
     gitContext: getGitContext(cwd2) ?? void 0,
     envInfo: getEnvContext()
   });
