@@ -24,35 +24,38 @@ export interface ToolResult<T = string> {
 
 /** Convert zod schema to JSON Schema (simplified) */
 export function zodToJsonSchema(schema: z.ZodObject<z.ZodRawShape>): Record<string, unknown> {
-  const shape = schema.shape
   const properties: Record<string, unknown> = {}
   const required: string[] = []
 
-  for (const [key, value] of Object.entries(shape)) {
+  for (const [key, value] of Object.entries(schema.shape)) {
     const fieldSchema = value as z.ZodTypeAny
     const isOptional = fieldSchema instanceof z.ZodOptional
-    const inner = isOptional ? (fieldSchema as z.ZodOptional<z.ZodTypeAny>).unwrap() : fieldSchema
-
+    const inner = isOptional ? fieldSchema.unwrap() : fieldSchema
     if (!isOptional) required.push(key)
-
-    if (inner instanceof z.ZodString) {
-      properties[key] = { type: 'string', description: (inner as z.ZodString).description ?? '' }
-    } else if (inner instanceof z.ZodNumber) {
-      properties[key] = { type: 'number', description: (inner as z.ZodNumber).description ?? '' }
-    } else if (inner instanceof z.ZodBoolean) {
-      properties[key] = { type: 'boolean' }
-    } else if (inner instanceof z.ZodArray) {
-      properties[key] = { type: 'array', items: { type: 'string' } }
-    } else {
-      properties[key] = { type: 'string' }
-    }
+    properties[key] = zodTypeToJsonSchema(inner)
   }
 
-  return {
-    type: 'object',
-    properties,
-    required,
+  return { type: 'object', properties, required }
+}
+
+function zodTypeToJsonSchema(schema: z.ZodTypeAny): Record<string, unknown> {
+  const desc = schema.description ? { description: schema.description } : {}
+  if (schema instanceof z.ZodString)  return { type: 'string',  ...desc }
+  if (schema instanceof z.ZodNumber)  return { type: 'number',  ...desc }
+  if (schema instanceof z.ZodBoolean) return { type: 'boolean', ...desc }
+  if (schema instanceof z.ZodEnum)    return { type: 'string', enum: (schema as z.ZodEnum<[string, ...string[]]>).options, ...desc }
+  if (schema instanceof z.ZodLiteral) {
+    const t = typeof schema.value === 'number' ? 'number' : typeof schema.value === 'boolean' ? 'boolean' : 'string'
+    return { type: t, enum: [schema.value], ...desc }
   }
+  if (schema instanceof z.ZodArray) {
+    return { type: 'array', items: zodTypeToJsonSchema(schema.element as z.ZodTypeAny), ...desc }
+  }
+  if (schema instanceof z.ZodObject) {
+    return zodToJsonSchema(schema as z.ZodObject<z.ZodRawShape>)
+  }
+  // Unknown type — treat as untyped string to keep the schema valid
+  return { type: 'string', ...desc }
 }
 
 export function buildToolSchema(tool: ToolDef): Record<string, unknown> {

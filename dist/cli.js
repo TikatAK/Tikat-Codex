@@ -57177,6 +57177,17 @@ Exception: If the user explicitly says "do it without asking" or "just do it", y
   }
 });
 
+// src/constants/index.ts
+var DEFAULT_MAX_TOKENS, MAX_AGENT_ROUNDS, MAX_SUBAGENT_ROUNDS;
+var init_constants = __esm({
+  "src/constants/index.ts"() {
+    "use strict";
+    DEFAULT_MAX_TOKENS = 8192;
+    MAX_AGENT_ROUNDS = 50;
+    MAX_SUBAGENT_ROUNDS = 20;
+  }
+});
+
 // src/tools/SubAgentTool/index.ts
 var MAX_TOOL_ROUNDS, inputSchema10, SUB_AGENT_SUFFIX, SubAgentTool;
 var init_SubAgentTool = __esm({
@@ -57187,7 +57198,8 @@ var init_SubAgentTool = __esm({
     init_toolExecutor();
     init_tools();
     init_prompts();
-    MAX_TOOL_ROUNDS = 20;
+    init_constants();
+    MAX_TOOL_ROUNDS = MAX_SUBAGENT_ROUNDS;
     inputSchema10 = external_exports.object({
       task: external_exports.string().describe("The task to perform. Be specific and self-contained."),
       context: external_exports.string().optional().describe("Additional context or files to be aware of.")
@@ -57256,31 +57268,34 @@ ${input.task}` : input.task;
 
 // src/tools/base.ts
 function zodToJsonSchema(schema) {
-  const shape = schema.shape;
   const properties = {};
   const required = [];
-  for (const [key, value] of Object.entries(shape)) {
+  for (const [key, value] of Object.entries(schema.shape)) {
     const fieldSchema = value;
     const isOptional = fieldSchema instanceof external_exports.ZodOptional;
     const inner = isOptional ? fieldSchema.unwrap() : fieldSchema;
     if (!isOptional) required.push(key);
-    if (inner instanceof external_exports.ZodString) {
-      properties[key] = { type: "string", description: inner.description ?? "" };
-    } else if (inner instanceof external_exports.ZodNumber) {
-      properties[key] = { type: "number", description: inner.description ?? "" };
-    } else if (inner instanceof external_exports.ZodBoolean) {
-      properties[key] = { type: "boolean" };
-    } else if (inner instanceof external_exports.ZodArray) {
-      properties[key] = { type: "array", items: { type: "string" } };
-    } else {
-      properties[key] = { type: "string" };
-    }
+    properties[key] = zodTypeToJsonSchema(inner);
   }
-  return {
-    type: "object",
-    properties,
-    required
-  };
+  return { type: "object", properties, required };
+}
+function zodTypeToJsonSchema(schema) {
+  const desc = schema.description ? { description: schema.description } : {};
+  if (schema instanceof external_exports.ZodString) return { type: "string", ...desc };
+  if (schema instanceof external_exports.ZodNumber) return { type: "number", ...desc };
+  if (schema instanceof external_exports.ZodBoolean) return { type: "boolean", ...desc };
+  if (schema instanceof external_exports.ZodEnum) return { type: "string", enum: schema.options, ...desc };
+  if (schema instanceof external_exports.ZodLiteral) {
+    const t2 = typeof schema.value === "number" ? "number" : typeof schema.value === "boolean" ? "boolean" : "string";
+    return { type: t2, enum: [schema.value], ...desc };
+  }
+  if (schema instanceof external_exports.ZodArray) {
+    return { type: "array", items: zodTypeToJsonSchema(schema.element), ...desc };
+  }
+  if (schema instanceof external_exports.ZodObject) {
+    return zodToJsonSchema(schema);
+  }
+  return { type: "string", ...desc };
 }
 function buildToolSchema(tool) {
   return {
@@ -57388,20 +57403,21 @@ var init_withRetry = __esm({
 });
 
 // src/services/api/claude.ts
+function resolveTools(opts) {
+  const builtins = opts.useBuiltinTools !== false ? TOOL_SCHEMAS : [];
+  const all = [...builtins, ...opts.tools ?? []];
+  return all.length > 0 ? convertToolsToOpenAI(all) : void 0;
+}
 async function sendMessage(opts) {
   const provider = loadActiveProvider();
   const client = getProviderClient(provider.config);
   const model = opts.model ?? provider.config.defaultModel;
-  const openaiMessages = convertMessagesToOpenAI(opts.messages, opts.system);
-  const builtinTools = opts.useBuiltinTools !== false ? TOOL_SCHEMAS : [];
-  const allTools = [...builtinTools, ...opts.tools ?? []];
-  const tools = allTools.length > 0 ? convertToolsToOpenAI(allTools) : void 0;
   const request = {
     model,
-    messages: openaiMessages,
-    max_tokens: opts.maxTokens ?? 8192,
+    messages: convertMessagesToOpenAI(opts.messages, opts.system),
+    max_tokens: opts.maxTokens ?? DEFAULT_MAX_TOKENS,
     stream: false,
-    ...tools ? { tools, tool_choice: "auto" } : {},
+    ...resolveTools(opts) ? { tools: resolveTools(opts), tool_choice: "auto" } : {},
     ...opts.temperature !== void 0 ? { temperature: opts.temperature } : {}
   };
   const response = await withRetry(() => client.chat.completions.create(request));
@@ -57411,17 +57427,13 @@ async function* sendMessageStream(opts) {
   const provider = loadActiveProvider();
   const client = getProviderClient(provider.config);
   const model = opts.model ?? provider.config.defaultModel;
-  const openaiMessages = convertMessagesToOpenAI(opts.messages, opts.system);
-  const builtinTools2 = opts.useBuiltinTools !== false ? TOOL_SCHEMAS : [];
-  const allTools2 = [...builtinTools2, ...opts.tools ?? []];
-  const tools = allTools2.length > 0 ? convertToolsToOpenAI(allTools2) : void 0;
   const request = {
     model,
-    messages: openaiMessages,
-    max_tokens: opts.maxTokens ?? 8192,
+    messages: convertMessagesToOpenAI(opts.messages, opts.system),
+    max_tokens: opts.maxTokens ?? DEFAULT_MAX_TOKENS,
     stream: true,
     stream_options: { include_usage: true },
-    ...tools ? { tools, tool_choice: "auto" } : {},
+    ...resolveTools(opts) ? { tools: resolveTools(opts), tool_choice: "auto" } : {},
     ...opts.temperature !== void 0 ? { temperature: opts.temperature } : {}
   };
   const stream = await withRetry(() => client.chat.completions.create(request));
@@ -57435,6 +57447,7 @@ var init_claude = __esm({
     init_openai2();
     init_tools();
     init_withRetry();
+    init_constants();
   }
 });
 
@@ -57573,6 +57586,26 @@ function getEnvContext() {
 }
 var init_session = __esm({
   "src/utils/context/session.ts"() {
+    "use strict";
+  }
+});
+
+// src/utils/stream.ts
+function finalizeToolUseBlocks(accumulator) {
+  const blocks = [];
+  for (const [, acc] of accumulator) {
+    let parsedInput = {};
+    try {
+      parsedInput = JSON.parse(acc.argsJson || "{}");
+    } catch {
+      parsedInput = {};
+    }
+    blocks.push({ type: "tool_use", id: acc.id, name: acc.name, input: parsedInput });
+  }
+  return blocks;
+}
+var init_stream = __esm({
+  "src/utils/stream.ts"() {
     "use strict";
   }
 });
@@ -58182,6 +58215,17 @@ async function launchRepl(opts = {}) {
   const { waitUntilExit } = render_default(import_react25.default.createElement(ReplApp, opts));
   await waitUntilExit();
 }
+function historyToDisplay(history) {
+  return history.filter((m2) => m2.role === "user" || m2.role === "assistant").flatMap((m2) => {
+    if (m2.role === "user") {
+      const c2 = typeof m2.content === "string" ? m2.content : "[\u590D\u6742\u6D88\u606F]";
+      return [{ role: "user", content: c2 }];
+    }
+    const blocks = Array.isArray(m2.content) ? m2.content : [];
+    const text = blocks.filter((b2) => b2.type === "text").map((b2) => b2.text).join("");
+    return text ? [{ role: "assistant", content: text }] : [];
+  });
+}
 function ReplApp({ initialPrompt, model: initialModel, resumeSessionId }) {
   const { exit } = use_app_default();
   const cwd2 = getCwd();
@@ -58191,15 +58235,7 @@ function ReplApp({ initialPrompt, model: initialModel, resumeSessionId }) {
     envInfo: getEnvContext()
   });
   const restoredSession = resumeSessionId ? loadSession(resumeSessionId) : null;
-  const restoredDisplay = restoredSession ? restoredSession.history.filter((m2) => m2.role === "user" || m2.role === "assistant").flatMap((m2) => {
-    if (m2.role === "user") {
-      const c2 = typeof m2.content === "string" ? m2.content : "[\u590D\u6742\u6D88\u606F]";
-      return [{ role: "user", content: c2 }];
-    }
-    const blocks = Array.isArray(m2.content) ? m2.content : [];
-    const text = blocks.filter((b2) => b2.type === "text").map((b2) => b2.text).join("");
-    return text ? [{ role: "assistant", content: text }] : [];
-  }) : [];
+  const restoredDisplay = restoredSession ? historyToDisplay(restoredSession.history) : [];
   const [state, setState] = (0, import_react25.useState)({
     history: restoredSession?.history ?? [],
     display: restoredDisplay,
@@ -58279,18 +58315,8 @@ function ReplApp({ initialPrompt, model: initialModel, resumeSessionId }) {
         if (textContent) {
           contentBlocks.push({ type: "text", text: textContent });
         }
-        const toolUseBlocks = [];
-        for (const [, acc] of toolAccumulator) {
-          let parsedInput = {};
-          try {
-            parsedInput = JSON.parse(acc.argsJson || "{}");
-          } catch {
-            parsedInput = {};
-          }
-          const tb = { type: "tool_use", id: acc.id, name: acc.name, input: parsedInput };
-          contentBlocks.push(tb);
-          toolUseBlocks.push(tb);
-        }
+        const toolUseBlocks = finalizeToolUseBlocks(toolAccumulator);
+        for (const tb of toolUseBlocks) contentBlocks.push(tb);
         if (toolUseBlocks.length === 0 || stopReason === "end_turn") {
           messages = [...messages, { role: "assistant", content: contentBlocks }];
           const meta = saveSession(currentState.sessionId, messages, currentState.model);
@@ -58464,7 +58490,7 @@ async function handleSlashCommand(cmd, _state, setState, exit) {
       setState((s2) => ({ ...s2, info: "\u23F3 \u6B63\u5728\u68C0\u67E5\u66F4\u65B0..." }));
       {
         const { checkForUpdates: checkForUpdates2 } = await Promise.resolve().then(() => (init_updater(), updater_exports));
-        const VERSION3 = "1.4.3";
+        const VERSION3 = "1.4.4";
         const info = await checkForUpdates2(VERSION3);
         if (!info.hasUpdate) {
           setState((s2) => ({ ...s2, info: `\u2705 \u5DF2\u662F\u6700\u65B0\u7248\u672C v${info.latestVersion}` }));
@@ -58506,19 +58532,10 @@ async function handleSlashCommand(cmd, _state, setState, exit) {
         setState((s2) => ({ ...s2, info: `\u627E\u4E0D\u5230\u4F1A\u8BDD: ${sid}` }));
         break;
       }
-      const restoredDisp = sess.history.filter((m2) => m2.role === "user" || m2.role === "assistant").flatMap((m2) => {
-        if (m2.role === "user") {
-          const c2 = typeof m2.content === "string" ? m2.content : "[\u590D\u6742\u6D88\u606F]";
-          return [{ role: "user", content: c2 }];
-        }
-        const blocks = Array.isArray(m2.content) ? m2.content : [];
-        const text = blocks.filter((b2) => b2.type === "text").map((b2) => b2.text).join("");
-        return text ? [{ role: "assistant", content: text }] : [];
-      });
       setState((s2) => ({
         ...s2,
         history: sess.history,
-        display: restoredDisp,
+        display: historyToDisplay(sess.history),
         streamingText: "",
         sessionId: sess.id,
         model: sess.model ?? s2.model,
@@ -58580,8 +58597,10 @@ var init_repl = __esm({
     init_highlight();
     init_prompts();
     init_session();
+    init_stream();
+    init_constants();
     import_jsx_runtime3 = __toESM(require_jsx_runtime(), 1);
-    MAX_TOOL_ROUNDS2 = 50;
+    MAX_TOOL_ROUNDS2 = MAX_AGENT_ROUNDS;
   }
 });
 
@@ -58610,7 +58629,9 @@ init_claude();
 init_updater();
 init_prompts();
 init_session();
-var VERSION2 = "1.4.3";
+init_stream();
+init_constants();
+var VERSION2 = "1.4.4";
 async function silentUpdateCheck() {
   try {
     const info = await checkForUpdates(VERSION2);
@@ -58663,7 +58684,7 @@ async function runNonInteractive(prompt, model) {
     gitContext: getGitContext(cwd2) ?? void 0,
     envInfo: getEnvContext()
   });
-  const MAX_ROUNDS = 50;
+  const MAX_ROUNDS = MAX_AGENT_ROUNDS;
   let messages = [
     { role: "user", content: prompt }
   ];
@@ -58694,23 +58715,8 @@ async function runNonInteractive(prompt, model) {
       }
       const contentBlocks = [];
       if (textContent) contentBlocks.push({ type: "text", text: textContent });
-      const toolUseBlocks = [];
-      for (const [, acc] of toolAccumulator) {
-        let parsedInput = {};
-        try {
-          parsedInput = JSON.parse(acc.argsJson || "{}");
-        } catch {
-          parsedInput = {};
-        }
-        const tb = {
-          type: "tool_use",
-          id: acc.id,
-          name: acc.name,
-          input: parsedInput
-        };
-        contentBlocks.push(tb);
-        toolUseBlocks.push(tb);
-      }
+      const toolUseBlocks = finalizeToolUseBlocks(toolAccumulator);
+      for (const tb of toolUseBlocks) contentBlocks.push(tb);
       if (toolUseBlocks.length === 0 || stopReason === "end_turn") {
         process.stdout.write("\n");
         break;

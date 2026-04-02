@@ -6,6 +6,8 @@ import { sendMessageStream } from './services/api/claude.js'
 import { checkForUpdates } from './utils/updater.js'
 import { buildSystemPrompt } from './constants/prompts.js'
 import { readProjectInstructions, getGitContext, getEnvContext } from './utils/context/session.js'
+import { finalizeToolUseBlocks } from './utils/stream.js'
+import { MAX_AGENT_ROUNDS } from './constants/index.js'
 
 const VERSION = process.env['TIKAT_VERSION'] ?? '0.1.0'
 
@@ -92,7 +94,7 @@ async function runNonInteractive(prompt: string, model?: string): Promise<void> 
     envInfo: getEnvContext(),
   })
 
-  const MAX_ROUNDS = 50
+  const MAX_ROUNDS = MAX_AGENT_ROUNDS
   let messages: import('./adapters/openai/index.js').AnthropicMessage[] = [
     { role: 'user', content: prompt },
   ]
@@ -129,16 +131,8 @@ async function runNonInteractive(prompt: string, model?: string): Promise<void> 
       // Build content blocks
       const contentBlocks: import('./adapters/openai/responseAdapter.js').AnthropicBlock[] = []
       if (textContent) contentBlocks.push({ type: 'text', text: textContent })
-      const toolUseBlocks: import('./adapters/openai/responseAdapter.js').AnthropicToolUseBlock[] = []
-      for (const [, acc] of toolAccumulator) {
-        let parsedInput: unknown = {}
-        try { parsedInput = JSON.parse(acc.argsJson || '{}') } catch { parsedInput = {} }
-        const tb: import('./adapters/openai/responseAdapter.js').AnthropicToolUseBlock = {
-          type: 'tool_use', id: acc.id, name: acc.name, input: parsedInput,
-        }
-        contentBlocks.push(tb)
-        toolUseBlocks.push(tb)
-      }
+      const toolUseBlocks = finalizeToolUseBlocks(toolAccumulator)
+      for (const tb of toolUseBlocks) contentBlocks.push(tb)
 
       // Done — no tool calls
       if (toolUseBlocks.length === 0 || stopReason === 'end_turn') {

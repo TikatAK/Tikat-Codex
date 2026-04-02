@@ -12,6 +12,11 @@ export const CONFIG_DIR_NAME = '.tikat-codex'
 export const DEFAULT_MAX_TOKENS = 8192
 export const DEFAULT_TEMPERATURE = undefined // let provider decide
 
+/** Max agent loop rounds before auto-stopping */
+export const MAX_AGENT_ROUNDS = 50
+/** Max rounds for sub-agent tasks (intentionally lower to prevent runaway sub-agents) */
+export const MAX_SUBAGENT_ROUNDS = 20
+
 /** Slash commands */
 export const SLASH_COMMANDS = [
   '/provider',

@@ -9,10 +9,12 @@ import { compressContext, estimateTokens } from '../utils/context/index.js'
 import { highlight } from '../utils/highlight/index.js'
 import { buildSystemPrompt } from '../constants/prompts.js'
 import { readProjectInstructions, getGitContext, getEnvContext } from '../utils/context/session.js'
+import { finalizeToolUseBlocks } from '../utils/stream.js'
+import { MAX_AGENT_ROUNDS } from '../constants/index.js'
 import type { AnthropicMessage, AnthropicBlock } from '../adapters/openai/index.js'
-import type { AnthropicToolUseBlock, AnthropicTextBlock } from '../adapters/openai/responseAdapter.js'
+import type { AnthropicTextBlock } from '../adapters/openai/responseAdapter.js'
 
-const MAX_TOOL_ROUNDS = 50
+const MAX_TOOL_ROUNDS = MAX_AGENT_ROUNDS
 
 interface ReplOptions {
   initialPrompt?: string
@@ -51,6 +53,23 @@ interface ReplState {
   sessionId: string | null     // current session ID (null = not yet saved)
 }
 
+function historyToDisplay(history: AnthropicMessage[]): DisplayMessage[] {
+  return history
+    .filter(m => m.role === 'user' || m.role === 'assistant')
+    .flatMap((m): DisplayMessage[] => {
+      if (m.role === 'user') {
+        const c = typeof m.content === 'string' ? m.content : '[复杂消息]'
+        return [{ role: 'user', content: c }]
+      }
+      const blocks = Array.isArray(m.content) ? m.content : []
+      const text = blocks
+        .filter((b): b is { type: 'text'; text: string } => b.type === 'text')
+        .map(b => b.text)
+        .join('')
+      return text ? [{ role: 'assistant', content: text }] : []
+    })
+}
+
 function ReplApp({ initialPrompt, model: initialModel, resumeSessionId }: ReplOptions) {
   const { exit } = useApp()
   const cwd = getCwd()
@@ -64,22 +83,7 @@ function ReplApp({ initialPrompt, model: initialModel, resumeSessionId }: ReplOp
 
   // Optionally restore a previous session
   const restoredSession = resumeSessionId ? loadSession(resumeSessionId) : null
-  const restoredDisplay: DisplayMessage[] = restoredSession
-    ? restoredSession.history
-        .filter(m => m.role === 'user' || m.role === 'assistant')
-        .flatMap((m): DisplayMessage[] => {
-          if (m.role === 'user') {
-            const c = typeof m.content === 'string' ? m.content : '[复杂消息]'
-            return [{ role: 'user', content: c }]
-          }
-          const blocks = Array.isArray(m.content) ? m.content : []
-          const text = blocks
-            .filter((b): b is { type: 'text'; text: string } => b.type === 'text')
-            .map(b => b.text)
-            .join('')
-          return text ? [{ role: 'assistant', content: text }] : []
-        })
-    : []
+  const restoredDisplay = restoredSession ? historyToDisplay(restoredSession.history) : []
 
   const [state, setState] = useState<ReplState>({
     history: restoredSession?.history ?? [],
@@ -181,14 +185,8 @@ function ReplApp({ initialPrompt, model: initialModel, resumeSessionId }: ReplOp
         if (textContent) {
           contentBlocks.push({ type: 'text', text: textContent } satisfies AnthropicTextBlock)
         }
-        const toolUseBlocks: AnthropicToolUseBlock[] = []
-        for (const [, acc] of toolAccumulator) {
-          let parsedInput: unknown = {}
-          try { parsedInput = JSON.parse(acc.argsJson || '{}') } catch { parsedInput = {} }
-          const tb: AnthropicToolUseBlock = { type: 'tool_use', id: acc.id, name: acc.name, input: parsedInput }
-          contentBlocks.push(tb)
-          toolUseBlocks.push(tb)
-        }
+        const toolUseBlocks = finalizeToolUseBlocks(toolAccumulator)
+        for (const tb of toolUseBlocks) contentBlocks.push(tb)
 
         // ── No tools — done ───────────────────────────────────────────────
         if (toolUseBlocks.length === 0 || stopReason === 'end_turn') {
@@ -454,23 +452,10 @@ async function handleSlashCommand(
         setState(s => ({ ...s, info: `找不到会话: ${sid}` }))
         break
       }
-      const restoredDisp: DisplayMessage[] = sess.history
-        .filter(m => m.role === 'user' || m.role === 'assistant')
-        .flatMap((m): DisplayMessage[] => {
-          if (m.role === 'user') {
-            const c = typeof m.content === 'string' ? m.content : '[复杂消息]'
-            return [{ role: 'user', content: c }]
-          }
-          const blocks = Array.isArray(m.content) ? m.content : []
-          const text = blocks
-            .filter((b): b is { type: 'text'; text: string } => b.type === 'text')
-            .map(b => b.text).join('')
-          return text ? [{ role: 'assistant', content: text }] : []
-        })
       setState(s => ({
         ...s,
         history: sess.history,
-        display: restoredDisp,
+        display: historyToDisplay(sess.history),
         streamingText: '',
         sessionId: sess.id,
         model: sess.model ?? s.model,

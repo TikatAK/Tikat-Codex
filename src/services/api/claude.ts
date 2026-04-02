@@ -15,6 +15,7 @@ import type {
 } from '../../adapters/openai/index.js'
 import { TOOL_SCHEMAS } from '../../tools/index.js'
 import { withRetry } from './withRetry.js'
+import { DEFAULT_MAX_TOKENS } from '../../constants/index.js'
 
 export interface SendMessageOptions {
   messages: AnthropicMessage[]
@@ -28,6 +29,12 @@ export interface SendMessageOptions {
   useBuiltinTools?: boolean
 }
 
+function resolveTools(opts: SendMessageOptions): OpenAI.Chat.ChatCompletionTool[] | undefined {
+  const builtins = opts.useBuiltinTools !== false ? (TOOL_SCHEMAS as unknown as AnthropicTool[]) : []
+  const all = [...builtins, ...(opts.tools ?? [])]
+  return all.length > 0 ? convertToolsToOpenAI(all) : undefined
+}
+
 /**
  * Send a message using the active provider and return a full response.
  */
@@ -36,17 +43,12 @@ export async function sendMessage(opts: SendMessageOptions): Promise<AnthropicRe
   const client = getProviderClient(provider.config)
   const model = opts.model ?? provider.config.defaultModel
 
-  const openaiMessages = convertMessagesToOpenAI(opts.messages, opts.system)
-  const builtinTools = opts.useBuiltinTools !== false ? (TOOL_SCHEMAS as unknown as AnthropicTool[]) : []
-  const allTools = [...builtinTools, ...(opts.tools ?? [])]
-  const tools = allTools.length > 0 ? convertToolsToOpenAI(allTools) : undefined
-
   const request: OpenAI.Chat.ChatCompletionCreateParamsNonStreaming = {
     model,
-    messages: openaiMessages,
-    max_tokens: opts.maxTokens ?? 8192,
+    messages: convertMessagesToOpenAI(opts.messages, opts.system),
+    max_tokens: opts.maxTokens ?? DEFAULT_MAX_TOKENS,
     stream: false,
-    ...(tools ? { tools, tool_choice: 'auto' } : {}),
+    ...(resolveTools(opts) ? { tools: resolveTools(opts), tool_choice: 'auto' } : {}),
     ...(opts.temperature !== undefined ? { temperature: opts.temperature } : {}),
   }
 
@@ -64,18 +66,13 @@ export async function* sendMessageStream(
   const client = getProviderClient(provider.config)
   const model = opts.model ?? provider.config.defaultModel
 
-  const openaiMessages = convertMessagesToOpenAI(opts.messages, opts.system)
-  const builtinTools2 = opts.useBuiltinTools !== false ? (TOOL_SCHEMAS as unknown as AnthropicTool[]) : []
-  const allTools2 = [...builtinTools2, ...(opts.tools ?? [])]
-  const tools = allTools2.length > 0 ? convertToolsToOpenAI(allTools2) : undefined
-
   const request: OpenAI.Chat.ChatCompletionCreateParamsStreaming = {
     model,
-    messages: openaiMessages,
-    max_tokens: opts.maxTokens ?? 8192,
+    messages: convertMessagesToOpenAI(opts.messages, opts.system),
+    max_tokens: opts.maxTokens ?? DEFAULT_MAX_TOKENS,
     stream: true,
     stream_options: { include_usage: true },
-    ...(tools ? { tools, tool_choice: 'auto' } : {}),
+    ...(resolveTools(opts) ? { tools: resolveTools(opts), tool_choice: 'auto' } : {}),
     ...(opts.temperature !== undefined ? { temperature: opts.temperature } : {}),
   }
 
