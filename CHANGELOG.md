@@ -4,6 +4,24 @@
 
 ---
 
+## [1.2.0] - 2026-04-02
+
+### 新增
+- **代码语法高亮**：AI 回复中的代码块（\`\`\`lang）自动着色，支持 JS/TS/Python/Go/Rust/Bash 等
+- **Markdown 加粗渲染**：`**文字**` 和 `*文字*` 在终端中正确显示
+- **`codex diagnose` 命令**：一键诊断 Node.js 版本、提供商配置、API 端点可达性、模型推理可用性
+- **`/diagnose` REPL 斜杠命令**：在会话中快速调用诊断
+- **上下文自动压缩**：对话超过 40 条消息时自动压缩早期历史（保留最近 10 条），防止 token 溢出，压缩时显示估算 token 数
+- **新增提供商预设**：
+  - Groq（超快推理）：llama-3.3-70b, llama-3.1-8b, deepseek-r1-distill, qwen-qwq-32b 等
+  - 硅基流动 SiliconFlow：DeepSeek-V3/R1、Qwen3-235B、Qwen2.5-Coder-32B 等
+  - OpenRouter（多模型聚合）：可访问 Claude/GPT/Gemini/DeepSeek 等数百个模型
+
+### 改进
+- `/help` 命令新增 `/diagnose` 条目
+
+---
+
 ## [1.1.0] - 2026-04-02
 
 ### 新增

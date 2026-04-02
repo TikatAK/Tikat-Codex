@@ -86,6 +86,33 @@ export const PROVIDER_PRESETS: ProviderPreset[] = [
     supportsTools: false,
     apiKeyHint: '本地运行无需 API Key，输入任意字符即可',
   },
+  {
+    id: 'groq',
+    name: 'Groq (超快推理)',
+    baseURL: 'https://api.groq.com/openai/v1',
+    defaultModel: 'llama-3.3-70b-versatile',
+    models: ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant', 'deepseek-r1-distill-llama-70b', 'qwen-qwq-32b', 'gemma2-9b-it'],
+    supportsTools: true,
+    apiKeyHint: 'Get key at: https://console.groq.com/keys',
+  },
+  {
+    id: 'siliconflow',
+    name: '硅基流动 SiliconFlow',
+    baseURL: 'https://api.siliconflow.cn/v1',
+    defaultModel: 'deepseek-ai/DeepSeek-V3',
+    models: ['deepseek-ai/DeepSeek-V3', 'deepseek-ai/DeepSeek-R1', 'Qwen/Qwen3-235B-A22B', 'Qwen/Qwen2.5-Coder-32B-Instruct', 'THUDM/glm-4-9b-chat'],
+    supportsTools: true,
+    apiKeyHint: 'Get key at: https://cloud.siliconflow.cn/account/ak',
+  },
+  {
+    id: 'openrouter',
+    name: 'OpenRouter (多模型聚合)',
+    baseURL: 'https://openrouter.ai/api/v1',
+    defaultModel: 'deepseek/deepseek-chat-v3-0324',
+    models: ['deepseek/deepseek-chat-v3-0324', 'anthropic/claude-3.5-sonnet', 'google/gemini-2.0-flash-001', 'meta-llama/llama-3.3-70b-instruct'],
+    supportsTools: true,
+    apiKeyHint: 'Get key at: https://openrouter.ai/keys',
+  },
 ]
 
 export const CUSTOM_PRESET_ID = 'custom'

@@ -5,6 +5,8 @@ import { executeTools } from '../services/api/toolExecutor.js'
 import { providerCommand } from '../commands/provider/index.js'
 import { getCwd } from '../utils/cwd.js'
 import { saveSession, loadSession, listSessions, deleteSession } from '../utils/sessions/index.js'
+import { compressContext, estimateTokens } from '../utils/context/index.js'
+import { highlight } from '../utils/highlight/index.js'
 import type { AnthropicMessage, AnthropicBlock } from '../adapters/openai/index.js'
 import type { AnthropicToolUseBlock, AnthropicTextBlock } from '../adapters/openai/responseAdapter.js'
 
@@ -102,9 +104,16 @@ function ReplApp({ initialPrompt, model: initialModel, resumeSessionId }: ReplOp
     let loopCompleted = false
     for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
       try {
+        // ── Context compression ───────────────────────────────────────────
+        const { messages: compressedMessages, compressed } = compressContext(messages)
+        if (compressed) {
+          const est = estimateTokens(compressedMessages)
+          setState(s => ({ ...s, info: `🗜 上下文已压缩（约 ${est} tokens）` }))
+        }
+
         // ── Consume stream and reconstruct response ──────────────────────
         const streamGen = sendMessageStream({
-          messages,
+          messages: compressedMessages,
           system: `${SYSTEM_PROMPT}\nWorking directory: ${cwd}`,
           model: currentState.model,
         })
@@ -299,7 +308,7 @@ function ReplApp({ initialPrompt, model: initialModel, resumeSessionId }: ReplOp
           {msg.role === 'assistant' && (
             <>
               <Text color="cyan" bold>◆ Codex</Text>
-              <Box paddingLeft={2}><Text wrap="wrap">{msg.content}</Text></Box>
+              <Box paddingLeft={2}><Text wrap="wrap">{highlight(msg.content)}</Text></Box>
               {msg.usage && (
                 <Box paddingLeft={2}>
                   <Text color="gray" dimColor>
@@ -409,6 +418,14 @@ async function handleSlashCommand(
         }
       }
       break
+    case '/diagnose':
+      setState(s => ({ ...s, info: '🔍 请切换到终端查看诊断结果，或在新终端运行 codex diagnose' }))
+      // Print diagnose output directly (outside ink render)
+      setTimeout(async () => {
+        const { diagnoseCommand } = await import('../commands/diagnose/index.js')
+        await diagnoseCommand()
+      }, 100)
+      break
     case '/sessions': {
       const sessions = listSessions()
       if (sessions.length === 0) {
@@ -483,6 +500,7 @@ async function handleSlashCommand(
           '/save                             — 手动保存当前会话',
           '/delete <id>                      — 删除会话',
           '/clear                            — 清除当前对话',
+          '/diagnose                         — 诊断网络/配置/模型连接',
           '/update                           — 检查版本更新',
           '/exit                             — 退出',
         ].join('\n'),

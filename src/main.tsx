@@ -43,6 +43,14 @@ program
   })
 
 program
+  .command('diagnose')
+  .description('Run diagnostics: check Node.js version, provider config, network and model connectivity')
+  .action(async () => {
+    const { diagnoseCommand } = await import('./commands/diagnose/index.js')
+    await diagnoseCommand()
+  })
+
+program
   .argument('[prompt]', 'Optional prompt to run non-interactively')
   .option('-m, --model <model>', 'Override model for this session')
   .option('-p, --print', 'Print output and exit (non-interactive)')

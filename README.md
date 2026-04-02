@@ -55,6 +55,9 @@ codex
 |--------|----------|
 | DeepSeek | `https://api.deepseek.com/v1` |
 | OpenAI | `https://api.openai.com/v1` |
+| Groq（超快推理）| `https://api.groq.com/openai/v1` |
+| 硅基流动 SiliconFlow | `https://api.siliconflow.cn/v1` |
+| OpenRouter（多模型聚合）| `https://openrouter.ai/api/v1` |
 | Kimi (月之暗面) | `https://api.moonshot.cn/v1` |
 | 通义千问 | `https://dashscope.aliyuncs.com/compatible-mode/v1` |
 | 智谱 GLM | `https://open.bigmodel.cn/api/paas/v4` |
@@ -89,6 +92,9 @@ codex provider set       # 可视化配置
 codex provider status    # 查看当前配置
 codex provider test      # 测试连接
 codex provider list      # 列出所有预设
+
+# 诊断工具（检查网络/配置/模型连接）
+codex diagnose
 
 # 检查并更新版本
 codex update

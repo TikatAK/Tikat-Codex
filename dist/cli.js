@@ -4010,7 +4010,7 @@ var require_react_production_min = __commonJS({
     }, enqueueReplaceState: function() {
     }, enqueueSetState: function() {
     } };
-    var C2 = Object.assign;
+    var C3 = Object.assign;
     var D2 = {};
     function E2(a2, b2, e2) {
       this.props = a2;
@@ -4037,7 +4037,7 @@ var require_react_production_min = __commonJS({
     }
     var H2 = G2.prototype = new F2();
     H2.constructor = G2;
-    C2(H2, E2.prototype);
+    C3(H2, E2.prototype);
     H2.isPureReactComponent = true;
     var I2 = Array.isArray;
     var J2 = Object.prototype.hasOwnProperty;
@@ -4158,7 +4158,7 @@ var require_react_production_min = __commonJS({
     exports.act = X2;
     exports.cloneElement = function(a2, b2, e2) {
       if (null === a2 || void 0 === a2) throw Error("React.cloneElement(...): The argument must be a React element, but you passed " + a2 + ".");
-      var d2 = C2({}, a2.props), c2 = a2.key, k2 = a2.ref, h2 = a2._owner;
+      var d2 = C3({}, a2.props), c2 = a2.key, k2 = a2.ref, h2 = a2._owner;
       if (null != b2) {
         void 0 !== b2.ref && (k2 = b2.ref, h2 = K2.current);
         void 0 !== b2.key && (c2 = "" + b2.key);
@@ -6837,12 +6837,12 @@ var init_yoga_wasm_base64_esm = __esm({
           }
           return d2;
         }
-        var ia, ja, A2, C2, ka, D2, E2, la, ma;
+        var ia, ja, A2, C3, ka, D2, E2, la, ma;
         function na() {
           var a2 = fa.buffer;
           ia = a2;
           h2.HEAP8 = ja = new Int8Array(a2);
-          h2.HEAP16 = C2 = new Int16Array(a2);
+          h2.HEAP16 = C3 = new Int16Array(a2);
           h2.HEAP32 = D2 = new Int32Array(a2);
           h2.HEAPU8 = A2 = new Uint8Array(a2);
           h2.HEAPU16 = ka = new Uint16Array(a2);
@@ -7273,7 +7273,7 @@ var init_yoga_wasm_base64_esm = __esm({
               };
             case 1:
               return c2 ? function(d2) {
-                return C2[d2 >> 1];
+                return C3[d2 >> 1];
               } : function(d2) {
                 return ka[d2 >> 1];
               };
@@ -7289,7 +7289,7 @@ var init_yoga_wasm_base64_esm = __esm({
         }
         function tb(a2, b2) {
           for (var c2 = "", d2 = 0; !(d2 >= b2 / 2); ++d2) {
-            var e2 = C2[a2 + 2 * d2 >> 1];
+            var e2 = C3[a2 + 2 * d2 >> 1];
             if (0 == e2) break;
             c2 += String.fromCharCode(e2);
           }
@@ -7301,8 +7301,8 @@ var init_yoga_wasm_base64_esm = __esm({
           c2 -= 2;
           var d2 = b2;
           c2 = c2 < 2 * a2.length ? c2 / 2 : a2.length;
-          for (var e2 = 0; e2 < c2; ++e2) C2[b2 >> 1] = a2.charCodeAt(e2), b2 += 2;
-          C2[b2 >> 1] = 0;
+          for (var e2 = 0; e2 < c2; ++e2) C3[b2 >> 1] = a2.charCodeAt(e2), b2 += 2;
+          C3[b2 >> 1] = 0;
           return b2 - d2;
         }
         function vb(a2) {
@@ -7556,7 +7556,7 @@ var init_yoga_wasm_base64_esm = __esm({
               argPackAdvance: 8,
               readValueFromPointer: function(g2) {
                 if (1 === c2) var k2 = ja;
-                else if (2 === c2) k2 = C2;
+                else if (2 === c2) k2 = C3;
                 else if (4 === c2) k2 = D2;
                 else throw new TypeError("Unknown boolean type size: " + b2);
                 return this.fromWireType(k2[g2 >> f2]);
@@ -8378,8 +8378,8 @@ var require_scheduler_production_min = __commonJS({
       if (c2 !== b2) {
         a2[0] = c2;
         a: for (var d2 = 0, e2 = a2.length, w2 = e2 >>> 1; d2 < w2; ) {
-          var m2 = 2 * (d2 + 1) - 1, C2 = a2[m2], n2 = m2 + 1, x2 = a2[n2];
-          if (0 > g2(C2, c2)) n2 < e2 && 0 > g2(x2, C2) ? (a2[d2] = x2, a2[n2] = c2, d2 = n2) : (a2[d2] = C2, a2[m2] = c2, d2 = m2);
+          var m2 = 2 * (d2 + 1) - 1, C3 = a2[m2], n2 = m2 + 1, x2 = a2[n2];
+          if (0 > g2(C3, c2)) n2 < e2 && 0 > g2(x2, C3) ? (a2[d2] = x2, a2[n2] = c2, d2 = n2) : (a2[d2] = C3, a2[m2] = c2, d2 = m2);
           else if (n2 < e2 && 0 > g2(x2, c2)) a2[d2] = x2, a2[n2] = c2, d2 = n2;
           else break a;
         }
@@ -9580,7 +9580,7 @@ var require_react_reconciler_production_min = __commonJS({
           c2 &= ~e2;
         }
       }
-      var C2 = 0;
+      var C3 = 0;
       function Ic(a2) {
         a2 &= -a2;
         return 1 < a2 ? 4 < a2 ? 0 !== (a2 & 268435455) ? 16 : 536870912 : 4 : 1;
@@ -9606,10 +9606,10 @@ var require_react_reconciler_production_min = __commonJS({
       function ad() {
         if (!Yc && null !== Wc) {
           Yc = true;
-          var a2 = 0, b2 = C2;
+          var a2 = 0, b2 = C3;
           try {
             var c2 = Wc;
-            for (C2 = 1; a2 < c2.length; a2++) {
+            for (C3 = 1; a2 < c2.length; a2++) {
               var d2 = c2[a2];
               do
                 d2 = d2(true);
@@ -9620,7 +9620,7 @@ var require_react_reconciler_production_min = __commonJS({
           } catch (e2) {
             throw null !== Wc && (Wc = Wc.slice(a2 + 1)), Jc(Nc, ad), e2;
           } finally {
-            C2 = b2, Yc = false;
+            C3 = b2, Yc = false;
           }
         }
         return null;
@@ -10579,15 +10579,15 @@ var require_react_reconciler_production_min = __commonJS({
         return b2;
       }
       function qf(a2, b2) {
-        var c2 = C2;
-        C2 = 0 !== c2 && 4 > c2 ? c2 : 4;
+        var c2 = C3;
+        C3 = 0 !== c2 && 4 > c2 ? c2 : 4;
         a2(true);
         var d2 = Ae2.transition;
         Ae2.transition = {};
         try {
           a2(false), b2();
         } finally {
-          C2 = c2, Ae2.transition = d2;
+          C3 = c2, Ae2.transition = d2;
         }
       }
       function rf() {
@@ -12466,7 +12466,7 @@ var require_react_reconciler_production_min = __commonJS({
         if (0 === (a2.mode & 1)) return 1;
         if (0 !== (H2 & 2) && 0 !== Z2) return Z2 & -Z2;
         if (null !== Cd.transition) return 0 === Ih && (Ih = Dc()), Ih;
-        a2 = C2;
+        a2 = C3;
         return 0 !== a2 ? a2 : Ya();
       }
       function af(a2, b2, c2, d2) {
@@ -12668,11 +12668,11 @@ var require_react_reconciler_production_min = __commonJS({
         null !== Dh && 0 === Dh.tag && 0 === (H2 & 6) && Oh();
         var b2 = H2;
         H2 |= 1;
-        var c2 = W2.transition, d2 = C2;
+        var c2 = W2.transition, d2 = C3;
         try {
-          if (W2.transition = null, C2 = 1, a2) return a2();
+          if (W2.transition = null, C3 = 1, a2) return a2();
         } finally {
-          C2 = d2, W2.transition = c2, H2 = b2, 0 === (H2 & 6) && ad();
+          C3 = d2, W2.transition = c2, H2 = b2, 0 === (H2 & 6) && ad();
         }
       }
       function Eg() {
@@ -12920,11 +12920,11 @@ var require_react_reconciler_production_min = __commonJS({
         0 === R2 && (R2 = 5);
       }
       function Wh(a2, b2, c2) {
-        var d2 = C2, e2 = W2.transition;
+        var d2 = C3, e2 = W2.transition;
         try {
-          W2.transition = null, C2 = 1, bi(a2, b2, c2, d2);
+          W2.transition = null, C3 = 1, bi(a2, b2, c2, d2);
         } finally {
-          W2.transition = e2, C2 = d2;
+          W2.transition = e2, C3 = d2;
         }
         return null;
       }
@@ -12952,8 +12952,8 @@ var require_react_reconciler_production_min = __commonJS({
         if (0 !== (c2.subtreeFlags & 15990) || f2) {
           f2 = W2.transition;
           W2.transition = null;
-          var g2 = C2;
-          C2 = 1;
+          var g2 = C3;
+          C3 = 1;
           var h2 = H2;
           H2 |= 4;
           uh.current = null;
@@ -12964,7 +12964,7 @@ var require_react_reconciler_production_min = __commonJS({
           dh(c2, a2, e2);
           Mc();
           H2 = h2;
-          C2 = g2;
+          C3 = g2;
           W2.transition = f2;
         } else a2.current = c2;
         Ch && (Ch = false, Dh = a2, Eh = e2);
@@ -12982,10 +12982,10 @@ var require_react_reconciler_production_min = __commonJS({
       }
       function Oh() {
         if (null !== Dh) {
-          var a2 = Ic(Eh), b2 = W2.transition, c2 = C2;
+          var a2 = Ic(Eh), b2 = W2.transition, c2 = C3;
           try {
             W2.transition = null;
-            C2 = 16 > a2 ? 16 : a2;
+            C3 = 16 > a2 ? 16 : a2;
             if (null === Dh) var d2 = false;
             else {
               a2 = Dh;
@@ -13101,7 +13101,7 @@ var require_react_reconciler_production_min = __commonJS({
             }
             return d2;
           } finally {
-            C2 = c2, W2.transition = b2;
+            C3 = c2, W2.transition = b2;
           }
         }
         return false;
@@ -13650,19 +13650,19 @@ var require_react_reconciler_production_min = __commonJS({
         return { $$typeof: lh, value: a2 };
       };
       exports2.deferredUpdates = function(a2) {
-        var b2 = C2, c2 = W2.transition;
+        var b2 = C3, c2 = W2.transition;
         try {
-          return W2.transition = null, C2 = 16, a2();
+          return W2.transition = null, C3 = 16, a2();
         } finally {
-          C2 = b2, W2.transition = c2;
+          C3 = b2, W2.transition = c2;
         }
       };
       exports2.discreteUpdates = function(a2, b2, c2, d2, e2) {
-        var f2 = C2, g2 = W2.transition;
+        var f2 = C3, g2 = W2.transition;
         try {
-          return W2.transition = null, C2 = 1, a2(b2, c2, d2, e2);
+          return W2.transition = null, C3 = 1, a2(b2, c2, d2, e2);
         } finally {
-          C2 = f2, W2.transition = g2, 0 === H2 && Bh();
+          C3 = f2, W2.transition = g2, 0 === H2 && Bh();
         }
       };
       exports2.findAllNodes = rh;
@@ -13705,11 +13705,11 @@ var require_react_reconciler_production_min = __commonJS({
       exports2.flushControlled = function(a2) {
         var b2 = H2;
         H2 |= 1;
-        var c2 = W2.transition, d2 = C2;
+        var c2 = W2.transition, d2 = C3;
         try {
-          W2.transition = null, C2 = 1, a2();
+          W2.transition = null, C3 = 1, a2();
         } finally {
-          C2 = d2, W2.transition = c2, H2 = b2, 0 === H2 && (Bh(), ad());
+          C3 = d2, W2.transition = c2, H2 = b2, 0 === H2 && (Bh(), ad());
         }
       };
       exports2.flushPassiveEffects = Oh;
@@ -13729,7 +13729,7 @@ var require_react_reconciler_production_min = __commonJS({
         return false;
       };
       exports2.getCurrentUpdatePriority = function() {
-        return C2;
+        return C3;
       };
       exports2.getFindAllNodesFailureDescription = function(a2, b2) {
         if (!bb) throw Error(n2(363));
@@ -13790,11 +13790,11 @@ var require_react_reconciler_production_min = __commonJS({
         null == a2.mutableSourceEagerHydrationData ? a2.mutableSourceEagerHydrationData = [b2, c2] : a2.mutableSourceEagerHydrationData.push(b2, c2);
       };
       exports2.runWithPriority = function(a2, b2) {
-        var c2 = C2;
+        var c2 = C3;
         try {
-          return C2 = a2, b2();
+          return C3 = a2, b2();
         } finally {
-          C2 = c2;
+          C3 = c2;
         }
       };
       exports2.shouldError = function() {
@@ -36880,6 +36880,33 @@ var init_registry = __esm({
         models: ["local-model"],
         supportsTools: false,
         apiKeyHint: "\u672C\u5730\u8FD0\u884C\u65E0\u9700 API Key\uFF0C\u8F93\u5165\u4EFB\u610F\u5B57\u7B26\u5373\u53EF"
+      },
+      {
+        id: "groq",
+        name: "Groq (\u8D85\u5FEB\u63A8\u7406)",
+        baseURL: "https://api.groq.com/openai/v1",
+        defaultModel: "llama-3.3-70b-versatile",
+        models: ["llama-3.3-70b-versatile", "llama-3.1-8b-instant", "deepseek-r1-distill-llama-70b", "qwen-qwq-32b", "gemma2-9b-it"],
+        supportsTools: true,
+        apiKeyHint: "Get key at: https://console.groq.com/keys"
+      },
+      {
+        id: "siliconflow",
+        name: "\u7845\u57FA\u6D41\u52A8 SiliconFlow",
+        baseURL: "https://api.siliconflow.cn/v1",
+        defaultModel: "deepseek-ai/DeepSeek-V3",
+        models: ["deepseek-ai/DeepSeek-V3", "deepseek-ai/DeepSeek-R1", "Qwen/Qwen3-235B-A22B", "Qwen/Qwen2.5-Coder-32B-Instruct", "THUDM/glm-4-9b-chat"],
+        supportsTools: true,
+        apiKeyHint: "Get key at: https://cloud.siliconflow.cn/account/ak"
+      },
+      {
+        id: "openrouter",
+        name: "OpenRouter (\u591A\u6A21\u578B\u805A\u5408)",
+        baseURL: "https://openrouter.ai/api/v1",
+        defaultModel: "deepseek/deepseek-chat-v3-0324",
+        models: ["deepseek/deepseek-chat-v3-0324", "anthropic/claude-3.5-sonnet", "google/gemini-2.0-flash-001", "meta-llama/llama-3.3-70b-instruct"],
+        supportsTools: true,
+        apiKeyHint: "Get key at: https://openrouter.ai/keys"
       }
     ];
     CUSTOM_PRESET_ID = "custom";
@@ -40902,7 +40929,7 @@ function kt(e2, t2, r2, o2, n2, a2) {
   const i2 = e2.getReader(), l2 = t2.getWriter();
   Vt(e2) && (e2._disturbed = true);
   let s2, _2, g2, w2 = false, S2 = false, v2 = "readable", R2 = "writable", T2 = false, q2 = false;
-  const C2 = u(((e3) => {
+  const C3 = u(((e3) => {
     g2 = e3;
   }));
   let E2 = Promise.resolve(void 0);
@@ -40951,7 +40978,7 @@ function kt(e2, t2, r2, o2, n2, a2) {
       function n3() {
         return e3 ? b(e3(), (() => F2(t3, r3)), ((e4) => F2(true, e4))) : F2(t3, r3), null;
       }
-      w2 || (w2 = true, q2 ? o3() : h(C2, o3));
+      w2 || (w2 = true, q2 ? o3() : h(C3, o3));
     }
     function L2(e3, t3) {
       z2(void 0, e3, t3);
@@ -41049,10 +41076,10 @@ function Ot(e2, t2) {
     }
     const q2 = new ReadableStream2({ type: "bytes", start(e4) {
       o2 = e4;
-    }, pull: S2, cancel: R2 }), C2 = new ReadableStream2({ type: "bytes", start(e4) {
+    }, pull: S2, cancel: R2 }), C3 = new ReadableStream2({ type: "bytes", start(e4) {
       n2 = e4;
     }, pull: v2, cancel: T2 });
-    return y2(i2), [q2, C2];
+    return y2(i2), [q2, C3];
   })(e2) : (function(e3, t3) {
     const r2 = e3.getReader();
     let o2, n2, a2, i2, l2, s2 = false, d2 = false, f2 = false, h2 = false;
@@ -57399,6 +57426,127 @@ var init_update = __esm({
   }
 });
 
+// src/commands/diagnose/index.ts
+var diagnose_exports = {};
+__export(diagnose_exports, {
+  diagnoseCommand: () => diagnoseCommand
+});
+function printResult(r2) {
+  const icon = r2.ok ? source_default.green("\u2713") : source_default.red("\u2717");
+  console.log(`  ${icon}  ${r2.label.padEnd(24)} ${r2.detail}`);
+}
+async function diagnoseCommand() {
+  console.log(source_default.cyan("\n\u{1F50D} TikatAK-Codex \u8BCA\u65AD\u62A5\u544A\n"));
+  const results = [];
+  const nodeVer = process.version;
+  const nodeMajor = parseInt(nodeVer.slice(1));
+  results.push({
+    label: "Node.js \u7248\u672C",
+    ok: nodeMajor >= 18,
+    detail: `${nodeVer}${nodeMajor < 18 ? " (\u9700\u8981 \u226518)" : ""}`
+  });
+  const configured = isProviderConfigured();
+  results.push({
+    label: "\u63D0\u4F9B\u5546\u5DF2\u914D\u7F6E",
+    ok: configured,
+    detail: configured ? "\u5DF2\u914D\u7F6E" : "\u672A\u914D\u7F6E\uFF0C\u8FD0\u884C codex provider set"
+  });
+  if (configured) {
+    let provider = null;
+    try {
+      provider = loadActiveProvider();
+      results.push({
+        label: "\u52A0\u8F7D\u63D0\u4F9B\u5546\u914D\u7F6E",
+        ok: true,
+        detail: `${provider.config.name ?? provider.config.baseURL} / ${provider.config.defaultModel}`
+      });
+    } catch (err) {
+      results.push({
+        label: "\u52A0\u8F7D\u63D0\u4F9B\u5546\u914D\u7F6E",
+        ok: false,
+        detail: err instanceof Error ? err.message : String(err)
+      });
+    }
+    if (provider) {
+      const baseURL = provider.config.baseURL;
+      const testUrl = baseURL.replace(/\/v1\/?$/, "") + "/v1/models";
+      try {
+        const ctrl = new AbortController();
+        const timer = setTimeout(() => ctrl.abort(), 8e3);
+        const res = await fetch(testUrl, {
+          headers: { Authorization: `Bearer ${provider.config.apiKey ?? ""}` },
+          signal: ctrl.signal
+        });
+        clearTimeout(timer);
+        results.push({
+          label: "API \u7AEF\u70B9\u53EF\u8FBE",
+          ok: res.status < 500,
+          detail: `HTTP ${res.status} (${testUrl})`
+        });
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        const isTimeout = msg.includes("abort") || msg.includes("timeout");
+        results.push({
+          label: "API \u7AEF\u70B9\u53EF\u8FBE",
+          ok: false,
+          detail: isTimeout ? "\u8FDE\u63A5\u8D85\u65F6\uFF088s\uFF09" : `\u7F51\u7EDC\u9519\u8BEF: ${msg.slice(0, 60)}`
+        });
+      }
+      try {
+        const client = getProviderClient(provider.config);
+        const ctrl2 = new AbortController();
+        const timer2 = setTimeout(() => ctrl2.abort(), 15e3);
+        const resp = await client.chat.completions.create({
+          model: provider.config.defaultModel,
+          messages: [{ role: "user", content: "Reply with the single word: ok" }],
+          max_tokens: 10
+        }, { signal: ctrl2.signal });
+        clearTimeout(timer2);
+        const text = resp.choices[0]?.message?.content?.trim() ?? "";
+        results.push({
+          label: "\u6A21\u578B\u63A8\u7406\u6D4B\u8BD5",
+          ok: text.length > 0,
+          detail: text.length > 0 ? `\u2713 \u54CD\u5E94\u6B63\u5E38 ("${text.slice(0, 20)}")` : "\u54CD\u5E94\u4E3A\u7A7A"
+        });
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        results.push({
+          label: "\u6A21\u578B\u63A8\u7406\u6D4B\u8BD5",
+          ok: false,
+          detail: msg.slice(0, 80)
+        });
+      }
+    }
+  }
+  try {
+    const { existsSync: existsSync8, mkdirSync: mkdirSync5 } = await import("fs");
+    const { homedir: homedir4 } = await import("os");
+    const { join: join10 } = await import("path");
+    const configDir = join10(homedir4(), ".tikatak-codex");
+    if (!existsSync8(configDir)) mkdirSync5(configDir, { recursive: true, mode: 448 });
+    results.push({ label: "\u914D\u7F6E\u76EE\u5F55\u53EF\u5199", ok: true, detail: configDir });
+  } catch (err) {
+    results.push({ label: "\u914D\u7F6E\u76EE\u5F55\u53EF\u5199", ok: false, detail: String(err) });
+  }
+  for (const r2 of results) printResult(r2);
+  const failed = results.filter((r2) => !r2.ok);
+  console.log();
+  if (failed.length === 0) {
+    console.log(source_default.green("  \u2705 \u6240\u6709\u68C0\u67E5\u901A\u8FC7\uFF01"));
+  } else {
+    console.log(source_default.yellow(`  \u26A0\uFE0F  ${failed.length} \u9879\u68C0\u67E5\u672A\u901A\u8FC7\uFF0C\u8BF7\u6839\u636E\u4E0A\u65B9\u63D0\u793A\u6392\u67E5`));
+  }
+  console.log();
+}
+var init_diagnose = __esm({
+  "src/commands/diagnose/index.ts"() {
+    "use strict";
+    init_source();
+    init_activeProvider();
+    init_client();
+  }
+});
+
 // src/utils/cwd.ts
 function getCwd() {
   return _cwd;
@@ -57514,6 +57662,257 @@ var init_sessions2 = __esm({
   }
 });
 
+// src/utils/context/index.ts
+function compressContext(messages) {
+  if (messages.length <= MAX_MESSAGES_BEFORE_COMPRESS) {
+    return { messages, compressed: false };
+  }
+  const kept = messages.slice(-MIN_MESSAGES_TO_KEEP);
+  const droppedCount = messages.length - MIN_MESSAGES_TO_KEEP;
+  const summaryMsg = {
+    role: "user",
+    content: `[\u7CFB\u7EDF: \u5BF9\u8BDD\u5386\u53F2\u5DF2\u538B\u7F29\uFF0C\u524D ${droppedCount} \u6761\u6D88\u606F\u5DF2\u7701\u7565\u4EE5\u8282\u7701 token\u3002\u8BF7\u57FA\u4E8E\u4EE5\u4E0B\u5BF9\u8BDD\u7EE7\u7EED\u3002]`
+  };
+  return { messages: [summaryMsg, ...kept], compressed: true };
+}
+function estimateTokens(messages) {
+  let chars = 0;
+  for (const msg of messages) {
+    if (typeof msg.content === "string") {
+      chars += msg.content.length;
+    } else if (Array.isArray(msg.content)) {
+      for (const block of msg.content) {
+        if (typeof block === "object" && block !== null) {
+          const b2 = block;
+          if (typeof b2["text"] === "string") chars += b2["text"].length;
+          else if (typeof b2["content"] === "string") chars += b2["content"].length;
+        }
+      }
+    }
+  }
+  return Math.ceil(chars / 4);
+}
+var MAX_MESSAGES_BEFORE_COMPRESS, MIN_MESSAGES_TO_KEEP;
+var init_context = __esm({
+  "src/utils/context/index.ts"() {
+    "use strict";
+    MAX_MESSAGES_BEFORE_COMPRESS = 40;
+    MIN_MESSAGES_TO_KEEP = 10;
+  }
+});
+
+// src/utils/highlight/index.ts
+function highlightLine(line) {
+  line = line.replace(/`([^`]+)`/g, (_2, code) => `${C2.builtin}\`${code}\`${C2.reset}`);
+  if (/^\s*(\/\/|#|--)\s/.test(line)) return C2.comment + line + C2.reset;
+  line = line.replace(/(["'`])(?:\\.|(?!\1)[^\\])*\1/g, (m2) => `${C2.string}${m2}${C2.reset}`);
+  line = line.replace(/\b(\d+\.?\d*)\b/g, (m2) => `${C2.number}${m2}${C2.reset}`);
+  line = line.replace(/\b([a-zA-Z_]\w*)\b/g, (word) => {
+    if (KEYWORDS.has(word)) return `${C2.keyword}${word}${C2.reset}`;
+    if (BUILTINS.has(word)) return `${C2.builtin}${word}${C2.reset}`;
+    return word;
+  });
+  return line;
+}
+function highlight(text) {
+  const lines = text.split("\n");
+  const out = [];
+  let inCode = false;
+  let lang = "";
+  for (const line of lines) {
+    const fenceMatch = line.match(/^```(\w*)$/);
+    if (fenceMatch) {
+      if (!inCode) {
+        inCode = true;
+        lang = fenceMatch[1] ?? "";
+        const label = lang ? ` ${lang}` : "";
+        out.push(`${C2.codeFence}\u2500\u2500\u2500${C2.langLabel}${label}${C2.reset}`);
+      } else {
+        inCode = false;
+        lang = "";
+        out.push(`${C2.codeFence}\u2500\u2500\u2500${C2.reset}`);
+      }
+      continue;
+    }
+    if (inCode) {
+      if ([
+        "js",
+        "ts",
+        "jsx",
+        "tsx",
+        "javascript",
+        "typescript",
+        "python",
+        "py",
+        "go",
+        "rust",
+        "rs",
+        "sh",
+        "bash",
+        "zsh",
+        "java",
+        "c",
+        "cpp",
+        ""
+      ].includes(lang)) {
+        out.push(highlightLine(line));
+      } else {
+        out.push(line);
+      }
+    } else {
+      let prose = line.replace(/\*\*(.+?)\*\*/g, `${C2.bold}$1${C2.reset}`).replace(/\*(.+?)\*/g, `${C2.dim}$1${C2.reset}`);
+      out.push(prose);
+    }
+  }
+  return out.join("\n");
+}
+var C2, KEYWORDS, BUILTINS;
+var init_highlight = __esm({
+  "src/utils/highlight/index.ts"() {
+    "use strict";
+    C2 = {
+      reset: "\x1B[0m",
+      bold: "\x1B[1m",
+      dim: "\x1B[2m",
+      // Colors
+      keyword: "\x1B[35m",
+      // magenta  — keywords
+      string: "\x1B[32m",
+      // green    — strings
+      number: "\x1B[33m",
+      // yellow   — numbers
+      comment: "\x1B[90m",
+      // gray     — comments
+      builtin: "\x1B[36m",
+      // cyan     — builtins / types
+      operator: "\x1B[34m",
+      // blue     — operators
+      codeFence: "\x1B[90m",
+      // gray     — ``` fence line
+      langLabel: "\x1B[36m"
+      // cyan     — language name
+    };
+    KEYWORDS = /* @__PURE__ */ new Set([
+      // JS/TS
+      "const",
+      "let",
+      "var",
+      "function",
+      "class",
+      "return",
+      "if",
+      "else",
+      "for",
+      "while",
+      "import",
+      "export",
+      "default",
+      "from",
+      "async",
+      "await",
+      "new",
+      "this",
+      "typeof",
+      "instanceof",
+      "throw",
+      "try",
+      "catch",
+      "finally",
+      "switch",
+      "case",
+      "break",
+      "continue",
+      "type",
+      "interface",
+      "enum",
+      "extends",
+      "implements",
+      "namespace",
+      "declare",
+      // Python
+      "def",
+      "lambda",
+      "with",
+      "as",
+      "pass",
+      "del",
+      "yield",
+      "raise",
+      "in",
+      "not",
+      "and",
+      "or",
+      "True",
+      "False",
+      "None",
+      // Go
+      "func",
+      "go",
+      "defer",
+      "chan",
+      "select",
+      "fallthrough",
+      "range",
+      "map",
+      "struct",
+      // Rust
+      "fn",
+      "let",
+      "mut",
+      "use",
+      "mod",
+      "pub",
+      "impl",
+      "trait",
+      "where",
+      "self",
+      "Self",
+      // Common
+      "null",
+      "undefined",
+      "true",
+      "false",
+      "static",
+      "void",
+      "int",
+      "string",
+      "bool"
+    ]);
+    BUILTINS = /* @__PURE__ */ new Set([
+      "console",
+      "process",
+      "require",
+      "module",
+      "exports",
+      "Promise",
+      "Array",
+      "Object",
+      "String",
+      "Number",
+      "Boolean",
+      "Error",
+      "Map",
+      "Set",
+      "JSON",
+      "Math",
+      "Date",
+      "setTimeout",
+      "clearTimeout",
+      "setInterval",
+      "print",
+      "len",
+      "range",
+      "list",
+      "dict",
+      "fmt",
+      "os",
+      "fs",
+      "path",
+      "http"
+    ]);
+  }
+});
+
 // src/repl/index.tsx
 var repl_exports = {};
 __export(repl_exports, {
@@ -57561,8 +57960,13 @@ function ReplApp({ initialPrompt, model: initialModel, resumeSessionId }) {
     let loopCompleted = false;
     for (let round = 0; round < MAX_TOOL_ROUNDS2; round++) {
       try {
+        const { messages: compressedMessages, compressed } = compressContext(messages);
+        if (compressed) {
+          const est = estimateTokens(compressedMessages);
+          setState((s2) => ({ ...s2, info: `\u{1F5DC} \u4E0A\u4E0B\u6587\u5DF2\u538B\u7F29\uFF08\u7EA6 ${est} tokens\uFF09` }));
+        }
         const streamGen = sendMessageStream({
-          messages,
+          messages: compressedMessages,
           system: `${SYSTEM_PROMPT}
 Working directory: ${cwd2}`,
           model: currentState.model
@@ -57733,7 +58137,7 @@ Working directory: ${cwd2}`,
       ] }),
       msg.role === "assistant" && /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(import_jsx_runtime3.Fragment, { children: [
         /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Text, { color: "cyan", bold: true, children: "\u25C6 Codex" }),
-        /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Box_default, { paddingLeft: 2, children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Text, { wrap: "wrap", children: msg.content }) }),
+        /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Box_default, { paddingLeft: 2, children: /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Text, { wrap: "wrap", children: highlight(msg.content) }) }),
         msg.usage && /* @__PURE__ */ (0, import_jsx_runtime3.jsx)(Box_default, { paddingLeft: 2, children: /* @__PURE__ */ (0, import_jsx_runtime3.jsxs)(Text, { color: "gray", dimColor: true, children: [
           "\u{1F4CA} ",
           msg.usage.input,
@@ -57796,7 +58200,7 @@ async function handleSlashCommand(cmd, _state, setState, exit) {
       setState((s2) => ({ ...s2, info: "\u23F3 \u6B63\u5728\u68C0\u67E5\u66F4\u65B0..." }));
       {
         const { checkForUpdates: checkForUpdates2 } = await Promise.resolve().then(() => (init_updater(), updater_exports));
-        const VERSION3 = "1.1.0";
+        const VERSION3 = "1.2.0";
         const info = await checkForUpdates2(VERSION3);
         if (!info.hasUpdate) {
           setState((s2) => ({ ...s2, info: `\u2705 \u5DF2\u662F\u6700\u65B0\u7248\u672C v${info.latestVersion}` }));
@@ -57807,6 +58211,13 @@ async function handleSlashCommand(cmd, _state, setState, exit) {
           }));
         }
       }
+      break;
+    case "/diagnose":
+      setState((s2) => ({ ...s2, info: "\u{1F50D} \u8BF7\u5207\u6362\u5230\u7EC8\u7AEF\u67E5\u770B\u8BCA\u65AD\u7ED3\u679C\uFF0C\u6216\u5728\u65B0\u7EC8\u7AEF\u8FD0\u884C codex diagnose" }));
+      setTimeout(async () => {
+        const { diagnoseCommand: diagnoseCommand2 } = await Promise.resolve().then(() => (init_diagnose(), diagnose_exports));
+        await diagnoseCommand2();
+      }, 100);
       break;
     case "/sessions": {
       const sessions = listSessions();
@@ -57880,6 +58291,7 @@ async function handleSlashCommand(cmd, _state, setState, exit) {
           "/save                             \u2014 \u624B\u52A8\u4FDD\u5B58\u5F53\u524D\u4F1A\u8BDD",
           "/delete <id>                      \u2014 \u5220\u9664\u4F1A\u8BDD",
           "/clear                            \u2014 \u6E05\u9664\u5F53\u524D\u5BF9\u8BDD",
+          "/diagnose                         \u2014 \u8BCA\u65AD\u7F51\u7EDC/\u914D\u7F6E/\u6A21\u578B\u8FDE\u63A5",
           "/update                           \u2014 \u68C0\u67E5\u7248\u672C\u66F4\u65B0",
           "/exit                             \u2014 \u9000\u51FA"
         ].join("\n")
@@ -57900,6 +58312,8 @@ var init_repl = __esm({
     await init_provider();
     init_cwd();
     init_sessions2();
+    init_context();
+    init_highlight();
     import_jsx_runtime3 = __toESM(require_jsx_runtime(), 1);
     MAX_TOOL_ROUNDS2 = 50;
     SYSTEM_PROMPT = `You are TikatAK-Codex, an expert AI coding assistant.
@@ -57932,7 +58346,7 @@ init_activeProvider();
 await init_provider();
 init_claude();
 init_updater();
-var VERSION2 = "1.1.0";
+var VERSION2 = "1.2.0";
 async function silentUpdateCheck() {
   try {
     const info = await checkForUpdates(VERSION2);
@@ -57951,6 +58365,10 @@ program2.command("provider [subcommand]").description("Manage AI provider config
 program2.command("update").description("Check for updates and optionally upgrade to the latest version").action(async () => {
   const { updateCommand: updateCommand2 } = await init_update().then(() => update_exports);
   await updateCommand2(VERSION2);
+});
+program2.command("diagnose").description("Run diagnostics: check Node.js version, provider config, network and model connectivity").action(async () => {
+  const { diagnoseCommand: diagnoseCommand2 } = await Promise.resolve().then(() => (init_diagnose(), diagnose_exports));
+  await diagnoseCommand2();
 });
 program2.argument("[prompt]", "Optional prompt to run non-interactively").option("-m, --model <model>", "Override model for this session").option("-p, --print", "Print output and exit (non-interactive)").option("-r, --resume <sessionId>", "Resume a previous session by ID").action(async (prompt, opts) => {
   if (!isProviderConfigured()) {
