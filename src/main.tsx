@@ -2,12 +2,11 @@ import { Command } from '@commander-js/extra-typings'
 import chalk from 'chalk'
 import { isProviderConfigured } from './providers/activeProvider.js'
 import { providerCommand } from './commands/provider/index.js'
-import { sendMessageStream } from './services/api/claude.js'
 import { checkForUpdates } from './utils/updater.js'
 import { buildSystemPrompt } from './constants/prompts.js'
 import { readProjectInstructions, getGitContext, getEnvContext } from './utils/context/session.js'
-import { finalizeToolUseBlocks } from './utils/stream.js'
-import { MAX_AGENT_ROUNDS } from './constants/index.js'
+import { runAgentLoop } from './services/agent/loop.js'
+import { getCwd } from './utils/cwd.js'
 
 const VERSION = process.env['TIKAT_VERSION'] ?? '0.1.0'
 
@@ -83,85 +82,29 @@ program
   })
 
 async function runNonInteractive(prompt: string, model?: string): Promise<void> {
-  const { executeTools } = await import('./services/api/toolExecutor.js')
-  const { getCwd } = await import('./utils/cwd.js')
-  const { compressContext } = await import('./utils/context/index.js')
   const cwd = getCwd()
-
   const systemPrompt = buildSystemPrompt({
     projectInstructions: readProjectInstructions(cwd) ?? undefined,
     gitContext: getGitContext(cwd) ?? undefined,
     envInfo: getEnvContext(),
   })
 
-  const MAX_ROUNDS = MAX_AGENT_ROUNDS
-  let messages: import('./adapters/openai/index.js').AnthropicMessage[] = [
-    { role: 'user', content: prompt },
-  ]
-
   try {
-    for (let round = 0; round < MAX_ROUNDS; round++) {
-      const { messages: compressed } = compressContext(messages)
-
-      const stream = sendMessageStream({
-        messages: compressed,
-        system: systemPrompt,
-        ...(model !== undefined ? { model } : {}),
-      })
-
-      let textContent = ''
-      let stopReason = 'end_turn'
-      const toolAccumulator = new Map<number, { id: string; name: string; argsJson: string }>()
-
-      for await (const event of stream) {
-        if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
-          process.stdout.write(event.delta.text)
-          textContent += event.delta.text
-        } else if (event.type === 'content_block_start' && event.content_block.type === 'tool_use') {
-          const tb = event.content_block
-          toolAccumulator.set(event.index, { id: tb.id, name: tb.name, argsJson: '' })
-        } else if (event.type === 'content_block_delta' && event.delta.type === 'input_json_delta') {
-          const acc = toolAccumulator.get(event.index)
-          if (acc) acc.argsJson += event.delta.partial_json
-        } else if (event.type === 'message_delta') {
-          stopReason = event.delta.stop_reason
+    const { hitRoundLimit } = await runAgentLoop({
+      messages: [{ role: 'user', content: prompt }],
+      system: systemPrompt,
+      model,
+      cwd,
+      onText: chunk => process.stdout.write(chunk),
+      onToolResult: results => {
+        for (const r of results) {
+          const icon = r.is_error ? chalk.red('✗') : chalk.green('✓')
+          process.stderr.write(chalk.yellow(`🔧 ${r.name}... `) + icon + '\n')
         }
-      }
-
-      // Build content blocks
-      const contentBlocks: import('./adapters/openai/responseAdapter.js').AnthropicBlock[] = []
-      if (textContent) contentBlocks.push({ type: 'text', text: textContent })
-      const toolUseBlocks = finalizeToolUseBlocks(toolAccumulator)
-      for (const tb of toolUseBlocks) contentBlocks.push(tb)
-
-      // Done — no tool calls
-      if (toolUseBlocks.length === 0 || stopReason === 'end_turn') {
-        process.stdout.write('\n')
-        break
-      }
-
-      // Execute tools
-      const results = await executeTools(toolUseBlocks, { cwd, signal: undefined })
-      for (const r of results) {
-        const icon = r.is_error ? chalk.red('✗') : chalk.green('✓')
-        process.stderr.write(chalk.yellow(`🔧 ${r.name}... `) + icon + '\n')
-      }
-
-      // Append to history
-      messages = [
-        ...messages,
-        { role: 'assistant', content: contentBlocks },
-        {
-          role: 'user',
-          content: results.map(r => ({
-            type: 'tool_result' as const,
-            tool_use_id: r.tool_use_id,
-            content: r.content,
-            is_error: r.is_error,
-          })),
-        },
-      ]
-    }
+      },
+    })
+    process.stdout.write('\n')
+    if (hitRoundLimit) process.stderr.write(chalk.yellow(`⚠️ 已达到最大工具调用轮数，自动停止。\n`))
   } catch (err) {
     console.error(chalk.red('\nError:'), err instanceof Error ? err.message : String(err))
     process.exit(1)

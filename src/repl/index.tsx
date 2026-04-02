@@ -1,20 +1,14 @@
 import React, { useState, useCallback, useEffect } from 'react'
 import { Box, Text, useInput, useApp, render } from 'ink'
-import { sendMessageStream } from '../services/api/claude.js'
-import { executeTools } from '../services/api/toolExecutor.js'
 import { providerCommand } from '../commands/provider/index.js'
 import { getCwd } from '../utils/cwd.js'
 import { saveSession, loadSession, listSessions, deleteSession } from '../utils/sessions/index.js'
-import { compressContext, estimateTokens } from '../utils/context/index.js'
 import { highlight } from '../utils/highlight/index.js'
 import { buildSystemPrompt } from '../constants/prompts.js'
 import { readProjectInstructions, getGitContext, getEnvContext } from '../utils/context/session.js'
-import { finalizeToolUseBlocks } from '../utils/stream.js'
+import { runAgentLoop as runSharedAgentLoop } from '../services/agent/loop.js'
 import { MAX_AGENT_ROUNDS } from '../constants/index.js'
-import type { AnthropicMessage, AnthropicBlock } from '../adapters/openai/index.js'
-import type { AnthropicTextBlock } from '../adapters/openai/responseAdapter.js'
-
-const MAX_TOOL_ROUNDS = MAX_AGENT_ROUNDS
+import type { AnthropicMessage } from '../adapters/openai/index.js'
 
 interface ReplOptions {
   initialPrompt?: string
@@ -97,12 +91,14 @@ function ReplApp({ initialPrompt, model: initialModel, resumeSessionId }: ReplOp
   })
 
   const runAgentLoop = useCallback(async (userInput: string, currentState: ReplState) => {
-    const userMsg: AnthropicMessage = { role: 'user', content: userInput }
-    let messages: AnthropicMessage[] = [...currentState.history, userMsg]
+    const initialMessages: AnthropicMessage[] = [
+      ...currentState.history,
+      { role: 'user', content: userInput },
+    ]
 
     setState(s => ({
       ...s,
-      history: messages,
+      history: initialMessages,
       display: [...s.display, { role: 'user', content: userInput }],
       streamingText: '',
       inputBuffer: '',
@@ -110,145 +106,64 @@ function ReplApp({ initialPrompt, model: initialModel, resumeSessionId }: ReplOp
       info: null,
     }))
 
-    let loopCompleted = false
-    for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
-      try {
-        // ── Context compression ───────────────────────────────────────────
-        const { messages: compressedMessages, compressed } = compressContext(messages)
-        if (compressed) {
-          const est = estimateTokens(compressedMessages)
-          setState(s => ({ ...s, info: `🗜 上下文已压缩（约 ${est} tokens）` }))
-        }
-
-        // ── Consume stream and reconstruct response ──────────────────────
-        const streamGen = sendMessageStream({
-          messages: compressedMessages,
-          system: systemPrompt,
-          model: currentState.model,
-        })
-
-        let textContent = ''
-        let inputTokens = 0
-        let outputTokens = 0
-        let stopReason: string = 'end_turn'
-        const toolAccumulator = new Map<number, { id: string; name: string; argsJson: string }>()
-
-        for await (const event of streamGen) {
-          if (event.type === 'message_start') {
-            inputTokens = event.usage.input_tokens
-          } else if (
-            event.type === 'content_block_delta' &&
-            event.delta.type === 'text_delta'
-          ) {
-            const text = event.delta.text
-            textContent += text
-            setState(s => ({ ...s, streamingText: s.streamingText + text }))
-          } else if (
-            event.type === 'content_block_start' &&
-            event.content_block.type === 'tool_use'
-          ) {
-            const tb = event.content_block
-            toolAccumulator.set(event.index, { id: tb.id, name: tb.name, argsJson: '' })
-            setState(s => ({ ...s, status: { type: 'tool', toolName: tb.name } }))
-          } else if (
-            event.type === 'content_block_delta' &&
-            event.delta.type === 'input_json_delta'
-          ) {
-            const acc = toolAccumulator.get(event.index)
-            if (acc) acc.argsJson += event.delta.partial_json
-          } else if (event.type === 'message_delta') {
-            stopReason = event.delta.stop_reason
-            outputTokens = event.usage.output_tokens
-          }
-        }
-
-        // ── Commit streamed text to display ──────────────────────────────
-        if (textContent) {
+    try {
+      const { messages, hitRoundLimit } = await runSharedAgentLoop({
+        messages: initialMessages,
+        system: systemPrompt,
+        model: currentState.model,
+        cwd,
+        onText: chunk =>
+          setState(s => ({ ...s, streamingText: s.streamingText + chunk })),
+        onToolStart: toolName =>
+          setState(s => ({ ...s, status: { type: 'tool', toolName } })),
+        onToolResult: results =>
+          setState(s => ({
+            ...s,
+            status: { type: 'streaming' },
+            display: [
+              ...s.display,
+              ...results.map(r => {
+                const full = r.content
+                const truncated = full.length > 500
+                return {
+                  role: 'tool' as const,
+                  content: truncated
+                    ? `${full.slice(0, 500)}\n...(共 ${full.length} 字符，仅显示前 500)`
+                    : full,
+                  toolName: r.name,
+                  isError: r.is_error,
+                }
+              }),
+            ],
+          })),
+        onCompressed: est =>
+          setState(s => ({ ...s, info: `🗜 上下文已压缩（约 ${est} tokens）` })),
+        onTurnComplete: ({ text, inputTokens, outputTokens }) =>
           setState(s => ({
             ...s,
             streamingText: '',
-            display: [
-              ...s.display,
-              {
-                role: 'assistant' as const,
-                content: textContent,
-                usage: { input: inputTokens, output: outputTokens },
-              },
-            ],
-          }))
-        } else {
-          setState(s => ({ ...s, streamingText: '' }))
-        }
-
-        // ── Build content blocks ─────────────────────────────────────────
-        const contentBlocks: AnthropicBlock[] = []
-        if (textContent) {
-          contentBlocks.push({ type: 'text', text: textContent } satisfies AnthropicTextBlock)
-        }
-        const toolUseBlocks = finalizeToolUseBlocks(toolAccumulator)
-        for (const tb of toolUseBlocks) contentBlocks.push(tb)
-
-        // ── No tools — done ───────────────────────────────────────────────
-        if (toolUseBlocks.length === 0 || stopReason === 'end_turn') {
-          messages = [...messages, { role: 'assistant', content: contentBlocks }]
-          // Auto-save session after each complete turn
-          const meta = saveSession(currentState.sessionId, messages, currentState.model)
-          setState(s => ({ ...s, history: messages, status: { type: 'idle' }, sessionId: meta.id }))
-          loopCompleted = true
-          break
-        }
-
-        // ── Execute tools in parallel ────────────────────────────────────
-        const results = await executeTools(toolUseBlocks, { cwd, signal: undefined })
-
-        for (const result of results) {
-          const full = result.content
-          const truncated = full.length > 500
-          const displayContent = truncated
-            ? `${full.slice(0, 500)}\n...(共 ${full.length} 字符，仅显示前 500)`
-            : full
-          setState(s => ({
-            ...s,
-            display: [
-              ...s.display,
-              { role: 'tool' as const, content: displayContent, toolName: result.name, isError: result.is_error },
-            ],
-          }))
-        }
-
-        // ── Build next round messages ─────────────────────────────────────
-        const assistantMsg: AnthropicMessage = { role: 'assistant', content: contentBlocks }
-        const toolResultMsg: AnthropicMessage = {
-          role: 'user',
-          content: results.map(r => ({
-            type: 'tool_result' as const,
-            tool_use_id: r.tool_use_id,
-            content: r.content,
-            is_error: r.is_error,
+            display: text
+              ? [...s.display, { role: 'assistant' as const, content: text, usage: { input: inputTokens, output: outputTokens } }]
+              : s.display,
           })),
-        }
-        messages = [...messages, assistantMsg, toolResultMsg]
-        setState(s => ({ ...s, history: messages, status: { type: 'streaming' } }))
+      })
 
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : String(err)
-        setState(s => ({ ...s, streamingText: '', status: { type: 'error', message: msg } }))
-        loopCompleted = true
-        break
-      }
-    }
-
-    if (!loopCompleted) {
+      const meta = saveSession(currentState.sessionId, messages, currentState.model)
       setState(s => ({
         ...s,
         history: messages,
-        streamingText: '',
         status: { type: 'idle' },
-        display: [
-          ...s.display,
-          { role: 'assistant', content: `⚠️ 已达到最大工具调用轮数 (${MAX_TOOL_ROUNDS})，自动停止执行。` },
-        ],
+        sessionId: meta.id,
+        ...(hitRoundLimit && {
+          display: [
+            ...s.display,
+            { role: 'assistant' as const, content: `⚠️ 已达到最大工具调用轮数 (${MAX_AGENT_ROUNDS})，自动停止执行。` },
+          ],
+        }),
       }))
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err)
+      setState(s => ({ ...s, streamingText: '', status: { type: 'error', message: msg } }))
     }
   }, [cwd])
 
