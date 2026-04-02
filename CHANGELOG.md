@@ -4,6 +4,13 @@
 
 ---
 
+## [1.2.2] - 2026-04-02
+
+### 修复
+- **弃用警告**：shebang 改为 `#!/usr/bin/env node --no-deprecation`，彻底消除第三方依赖（openai SDK、commander）产生的 `DEP0040`（punycode）和 `DEP0169`（url.parse）警告，输出更干净
+
+---
+
 ## [1.2.1] - 2026-04-02
 
 ### 新增

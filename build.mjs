@@ -14,7 +14,7 @@ const config = {
   format: 'esm',
   outfile: 'dist/cli.js',
   banner: {
-    js: "#!/usr/bin/env node\nimport { createRequire } from 'module';\nconst require = createRequire(import.meta.url);",
+    js: "#!/usr/bin/env node --no-deprecation\nimport { createRequire } from 'module';\nconst require = createRequire(import.meta.url);",
   },
   define: {
     'process.env.TIKATAK_VERSION': JSON.stringify(pkg.version),
