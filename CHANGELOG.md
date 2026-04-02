@@ -4,6 +4,28 @@
 
 ---
 
+## [1.3.1] - 2026-04-02
+
+### 修复
+- **`diagnose` 配置目录大小写错误**：`src/commands/diagnose/index.ts` 中配置目录为 `.Tikat-Codex`，已修正为 `.tikat-codex`，与 settings 和 sessions 模块保持一致
+- **README 配置目录文档错误**：`配置文件位置` 章节中的路径已修正为 `~/.tikat-codex/`，并补充 `sessions/` 目录说明
+- **package.json name 大小写**：修正为全小写 `tikat-codex`，符合 npm 包名规范
+
+---
+
+## [1.3.1] - 2026-04-02
+
+### 修复
+- **git 远端 URL**：本地仓库远端地址更新为 `https://github.com/TikatAK/Tikat-Codex.git`（与 GitHub 更名同步）
+- **`CONFIG_DIR_NAME` 大小写**：`constants/index.ts` 中 `.Tikat-Codex` 改为正确的 `.tikat-codex`
+- **`SLASH_COMMANDS` 不完整**：补充 v1.1.0 和 v1.2.0 新增的 `/sessions`、`/resume`、`/save`、`/delete`、`/diagnose`、`/update`
+- **测试临时目录命名**：`sessions.test.ts` 中 `tikatak-test-home` 同步更名为 `tikat-test-home`
+
+### 新增
+- **自动迁移旧配置**：首次启动 v1.3.x 时，自动将 `~/.tikatak-codex/` 的配置文件静默复制到 `~/.tikat-codex/`，已有用户无需手动迁移
+
+---
+
 ## [1.3.0] - 2026-04-02
 
 ### 重大变更

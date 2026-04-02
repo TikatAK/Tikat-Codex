@@ -6,7 +6,7 @@ export const ENV_PROVIDER = 'CODEX_PROVIDER'
 
 /** App info */
 export const APP_NAME = 'Tikat-Codex'
-export const CONFIG_DIR_NAME = '.Tikat-Codex'
+export const CONFIG_DIR_NAME = '.tikat-codex'
 
 /** Default generation settings */
 export const DEFAULT_MAX_TOKENS = 8192
@@ -16,7 +16,13 @@ export const DEFAULT_TEMPERATURE = undefined // let provider decide
 export const SLASH_COMMANDS = [
   '/provider',
   '/model',
+  '/sessions',
+  '/resume',
+  '/save',
+  '/delete',
   '/clear',
+  '/diagnose',
+  '/update',
   '/help',
   '/exit',
 ] as const

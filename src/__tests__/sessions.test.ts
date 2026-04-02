@@ -7,7 +7,7 @@ import fs from 'fs'
 const TEST_HOME = vi.hoisted(() => {
   const tmp = process.env['TEMP'] ?? process.env['TMPDIR'] ?? process.env['TMP'] ?? '/tmp'
   const sep = process.platform === 'win32' ? '\\' : '/'
-  return `${tmp}${sep}tikatak-test-home-${process.pid}`
+  return `${tmp}${sep}tikat-test-home-${process.pid}`
 })
 
 vi.mock('os', async (importOriginal) => {

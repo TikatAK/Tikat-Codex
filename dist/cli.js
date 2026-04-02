@@ -3869,9 +3869,21 @@ var init_source = __esm({
 });
 
 // src/utils/settings/index.ts
-import { existsSync, mkdirSync, readFileSync, writeFileSync, unlinkSync } from "fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync, unlinkSync, copyFileSync, readdirSync } from "fs";
 import { homedir } from "os";
 import { join } from "path";
+function migrateLegacyConfig() {
+  if (existsSync(CONFIG_DIR) || !existsSync(LEGACY_CONFIG_DIR)) return;
+  try {
+    mkdirSync(CONFIG_DIR, { recursive: true, mode: 448 });
+    for (const file of readdirSync(LEGACY_CONFIG_DIR)) {
+      const src = join(LEGACY_CONFIG_DIR, file);
+      const dst = join(CONFIG_DIR, file);
+      if (!existsSync(dst)) copyFileSync(src, dst);
+    }
+  } catch {
+  }
+}
 function ensureConfigDir() {
   if (!existsSync(CONFIG_DIR)) {
     mkdirSync(CONFIG_DIR, { recursive: true, mode: 448 });
@@ -3906,13 +3918,15 @@ function readApiKey() {
     return null;
   }
 }
-var CONFIG_DIR, SETTINGS_FILE, APIKEY_FILE;
+var CONFIG_DIR, LEGACY_CONFIG_DIR, SETTINGS_FILE, APIKEY_FILE;
 var init_settings = __esm({
   "src/utils/settings/index.ts"() {
     "use strict";
     CONFIG_DIR = join(homedir(), ".tikat-codex");
+    LEGACY_CONFIG_DIR = join(homedir(), ".tikatak-codex");
     SETTINGS_FILE = join(CONFIG_DIR, "settings.json");
     APIKEY_FILE = join(CONFIG_DIR, "apikey");
+    migrateLegacyConfig();
   }
 });
 
@@ -56714,7 +56728,7 @@ var init_GlobTool = __esm({
 });
 
 // src/tools/LSTool/index.ts
-import { readdirSync, statSync as statSync2, existsSync as existsSync5 } from "fs";
+import { readdirSync as readdirSync2, statSync as statSync2, existsSync as existsSync5 } from "fs";
 import * as path6 from "path";
 function isDir(p2) {
   try {
@@ -56749,7 +56763,7 @@ var init_LSTool = __esm({
             if (count >= MAX_ENTRIES) return;
             let names;
             try {
-              names = readdirSync(dir);
+              names = readdirSync2(dir);
             } catch {
               return;
             }
@@ -57522,7 +57536,7 @@ async function diagnoseCommand() {
     const { existsSync: existsSync8, mkdirSync: mkdirSync5 } = await import("fs");
     const { homedir: homedir4 } = await import("os");
     const { join: join10 } = await import("path");
-    const configDir = join10(homedir4(), ".Tikat-Codex");
+    const configDir = join10(homedir4(), ".tikat-codex");
     if (!existsSync8(configDir)) mkdirSync5(configDir, { recursive: true, mode: 448 });
     results.push({ label: "\u914D\u7F6E\u76EE\u5F55\u53EF\u5199", ok: true, detail: configDir });
   } catch (err) {
@@ -57560,7 +57574,7 @@ var init_cwd = __esm({
 });
 
 // src/utils/sessions/index.ts
-import { existsSync as existsSync7, mkdirSync as mkdirSync4, readFileSync as readFileSync5, writeFileSync as writeFileSync5, readdirSync as readdirSync2, unlinkSync as unlinkSync2 } from "fs";
+import { existsSync as existsSync7, mkdirSync as mkdirSync4, readFileSync as readFileSync5, writeFileSync as writeFileSync5, readdirSync as readdirSync3, unlinkSync as unlinkSync2 } from "fs";
 import { homedir as homedir3 } from "os";
 import { join as join9 } from "path";
 function ensureSessionsDir() {
@@ -57617,7 +57631,7 @@ function loadSession(id) {
 }
 function listSessions() {
   if (!existsSync7(SESSIONS_DIR)) return [];
-  const files = readdirSync2(SESSIONS_DIR).filter((f2) => f2.endsWith(".json"));
+  const files = readdirSync3(SESSIONS_DIR).filter((f2) => f2.endsWith(".json"));
   const sessions = [];
   for (const file of files) {
     try {
@@ -58200,7 +58214,7 @@ async function handleSlashCommand(cmd, _state, setState, exit) {
       setState((s2) => ({ ...s2, info: "\u23F3 \u6B63\u5728\u68C0\u67E5\u66F4\u65B0..." }));
       {
         const { checkForUpdates: checkForUpdates2 } = await Promise.resolve().then(() => (init_updater(), updater_exports));
-        const VERSION3 = "1.3.0";
+        const VERSION3 = "1.3.2";
         const info = await checkForUpdates2(VERSION3);
         if (!info.hasUpdate) {
           setState((s2) => ({ ...s2, info: `\u2705 \u5DF2\u662F\u6700\u65B0\u7248\u672C v${info.latestVersion}` }));
@@ -58346,7 +58360,7 @@ init_activeProvider();
 await init_provider();
 init_claude();
 init_updater();
-var VERSION2 = "1.3.0";
+var VERSION2 = "1.3.2";
 async function silentUpdateCheck() {
   try {
     const info = await checkForUpdates(VERSION2);

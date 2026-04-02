@@ -179,8 +179,9 @@ src/
 
 ## 配置文件位置
 
-- 设置: `~/.Tikat-Codex/settings.json`
-- API Key: `~/.Tikat-Codex/apikey`（权限 0600，仅当前用户可读）
+- 设置: `~/.tikat-codex/settings.json`
+- API Key: `~/.tikat-codex/apikey`（权限 0600，仅当前用户可读）
+- 历史会话: `~/.tikat-codex/sessions/`
 
 ---
 

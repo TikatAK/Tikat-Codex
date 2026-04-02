@@ -111,7 +111,7 @@ export async function diagnoseCommand(): Promise<void> {
     const { existsSync, mkdirSync } = await import('fs')
     const { homedir } = await import('os')
     const { join } = await import('path')
-    const configDir = join(homedir(), '.Tikat-Codex')
+    const configDir = join(homedir(), '.tikat-codex')
     if (!existsSync(configDir)) mkdirSync(configDir, { recursive: true, mode: 0o700 })
     results.push({ label: '配置目录可写', ok: true, detail: configDir })
   } catch (err) {

@@ -1,9 +1,10 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync, unlinkSync } from 'fs'
+import { existsSync, mkdirSync, readFileSync, writeFileSync, unlinkSync, copyFileSync, readdirSync } from 'fs'
 import { homedir } from 'os'
 import { join } from 'path'
 import type { StoredProviderSettings } from '../../providers/types.js'
 
 const CONFIG_DIR = join(homedir(), '.tikat-codex')
+const LEGACY_CONFIG_DIR = join(homedir(), '.tikatak-codex')  // old name before v1.3.0
 const SETTINGS_FILE = join(CONFIG_DIR, 'settings.json')
 const APIKEY_FILE = join(CONFIG_DIR, 'apikey')
 
@@ -14,6 +15,22 @@ export interface Settings {
   vim?: boolean
   [key: string]: unknown
 }
+
+/** Auto-migrate config from old ~/.tikatak-codex to ~/.tikat-codex (one-time, silent) */
+function migrateLegacyConfig(): void {
+  if (existsSync(CONFIG_DIR) || !existsSync(LEGACY_CONFIG_DIR)) return
+  try {
+    mkdirSync(CONFIG_DIR, { recursive: true, mode: 0o700 })
+    for (const file of readdirSync(LEGACY_CONFIG_DIR)) {
+      const src = join(LEGACY_CONFIG_DIR, file)
+      const dst = join(CONFIG_DIR, file)
+      if (!existsSync(dst)) copyFileSync(src, dst)
+    }
+  } catch { /* silent — don't block startup */ }
+}
+
+// Run migration once at module load
+migrateLegacyConfig()
 
 function ensureConfigDir(): void {
   if (!existsSync(CONFIG_DIR)) {
