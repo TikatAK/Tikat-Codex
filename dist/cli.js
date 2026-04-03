@@ -57293,24 +57293,25 @@ function writeTodos(todos) {
   mkdirSync3(join9(homedir2(), ".tikat-codex"), { recursive: true });
   writeFileSync4(TODO_FILE, JSON.stringify(todos, null, 2), "utf8");
 }
-var TODO_FILE, inputSchema11, TodoWriteTool, TodoReadTool;
+var TODO_FILE, todoItemSchema, writeInputSchema, TodoWriteTool, TodoReadTool, updateInputSchema, TodoUpdateTool, deleteInputSchema, TodoDeleteTool;
 var init_TodoWriteTool = __esm({
   "src/tools/TodoWriteTool/index.ts"() {
     "use strict";
     init_zod();
     TODO_FILE = join9(homedir2(), ".tikat-codex", "todos.json");
-    inputSchema11 = external_exports.object({
-      todos: external_exports.array(external_exports.object({
-        id: external_exports.string(),
-        content: external_exports.string(),
-        status: external_exports.enum(["pending", "in_progress", "completed"]),
-        priority: external_exports.enum(["high", "medium", "low"])
-      })).describe("The complete list of todos to write")
+    todoItemSchema = external_exports.object({
+      id: external_exports.string(),
+      content: external_exports.string(),
+      status: external_exports.enum(["pending", "in_progress", "completed"]),
+      priority: external_exports.enum(["high", "medium", "low"])
+    });
+    writeInputSchema = external_exports.object({
+      todos: external_exports.array(todoItemSchema).describe("The complete list of todos to write (replaces all existing todos)")
     });
     TodoWriteTool = {
       name: "TodoWrite",
-      description: "Write the todo list. Replaces the entire todo list with the provided todos. Use to create, update, or manage task tracking.",
-      inputSchema: inputSchema11,
+      description: "Replace the entire todo list with the provided todos. Use to create, update, or manage task tracking. To update a single item, read the list first with TodoRead, modify the item, then write back the full list.",
+      inputSchema: writeInputSchema,
       async execute(input, _context) {
         const ids = input.todos.map((t2) => t2.id);
         const dupeIds = ids.filter((id, i2) => ids.indexOf(id) !== i2);
@@ -57330,16 +57331,66 @@ var init_TodoWriteTool = __esm({
     };
     TodoReadTool = {
       name: "TodoRead",
-      description: "Read the current todo list.",
+      description: "Read the current todo list. Returns all todos with their id, status, priority, and content.",
       inputSchema: external_exports.object({}),
       async execute(_input, _context) {
         const todos = readTodos();
         if (todos.length === 0) return { content: "No todos found" };
-        return {
-          content: todos.map(
-            (t2) => `[${t2.status}] (${t2.priority}) ${t2.id}: ${t2.content}`
-          ).join("\n")
-        };
+        const lines = todos.map(
+          (t2) => `[${t2.status}] (${t2.priority}) ${t2.id}: ${t2.content}`
+        );
+        return { content: lines.join("\n") };
+      }
+    };
+    updateInputSchema = external_exports.object({
+      id: external_exports.string().describe("The ID of the todo to update"),
+      status: external_exports.enum(["pending", "in_progress", "completed"]).optional().describe("New status"),
+      content: external_exports.string().optional().describe("New content text"),
+      priority: external_exports.enum(["high", "medium", "low"]).optional().describe("New priority")
+    });
+    TodoUpdateTool = {
+      name: "TodoUpdate",
+      description: "Update a single todo item by ID. You can change its status, content, or priority without rewriting the entire list.",
+      inputSchema: updateInputSchema,
+      async execute(input, _context) {
+        const todos = readTodos();
+        const idx = todos.findIndex((t2) => t2.id === input.id);
+        if (idx === -1) {
+          return { content: `Todo not found: "${input.id}"`, isError: true };
+        }
+        const todo = todos[idx];
+        if (input.status !== void 0) todo.status = input.status;
+        if (input.content !== void 0) todo.content = input.content;
+        if (input.priority !== void 0) todo.priority = input.priority;
+        todos[idx] = todo;
+        try {
+          writeTodos(todos);
+          return { content: `Updated todo "${input.id}": [${todo.status}] (${todo.priority}) ${todo.content}` };
+        } catch (err) {
+          return { content: `Failed to update todo: ${String(err)}`, isError: true };
+        }
+      }
+    };
+    deleteInputSchema = external_exports.object({
+      id: external_exports.string().describe("The ID of the todo to delete")
+    });
+    TodoDeleteTool = {
+      name: "TodoDelete",
+      description: "Delete a single todo item by ID.",
+      inputSchema: deleteInputSchema,
+      async execute(input, _context) {
+        const todos = readTodos();
+        const before = todos.length;
+        const filtered = todos.filter((t2) => t2.id !== input.id);
+        if (filtered.length === before) {
+          return { content: `Todo not found: "${input.id}"`, isError: true };
+        }
+        try {
+          writeTodos(filtered);
+          return { content: `Deleted todo "${input.id}"` };
+        } catch (err) {
+          return { content: `Failed to delete todo: ${String(err)}`, isError: true };
+        }
       }
     };
   }
@@ -57420,7 +57471,7 @@ var init_constants = __esm({
 });
 
 // src/tools/SubAgentTool/index.ts
-var MAX_TOOL_ROUNDS, inputSchema12, SUB_AGENT_SUFFIX, SubAgentTool;
+var MAX_TOOL_ROUNDS, inputSchema11, SUB_AGENT_SUFFIX, SubAgentTool;
 var init_SubAgentTool = __esm({
   "src/tools/SubAgentTool/index.ts"() {
     "use strict";
@@ -57431,7 +57482,7 @@ var init_SubAgentTool = __esm({
     init_prompts();
     init_constants();
     MAX_TOOL_ROUNDS = MAX_SUBAGENT_ROUNDS;
-    inputSchema12 = external_exports.object({
+    inputSchema11 = external_exports.object({
       task: external_exports.string().describe("The task to perform. Be specific and self-contained."),
       context: external_exports.string().optional().describe("Additional context or files to be aware of.")
     });
@@ -57443,7 +57494,7 @@ Do not ask clarifying questions \u2014 make reasonable assumptions and complete 
     SubAgentTool = {
       name: "SubAgent",
       description: "Spawn a sub-agent to handle a focused, self-contained task in parallel. Useful for breaking large tasks into independent parts. Returns a text summary of what the sub-agent did.",
-      inputSchema: inputSchema12,
+      inputSchema: inputSchema11,
       async execute(input, context) {
         const systemPrompt = `${BASE_SYSTEM_PROMPT}${SUB_AGENT_SUFFIX}
 Working directory: ${context.cwd}`;
@@ -57573,6 +57624,8 @@ var init_tools = __esm({
       AskUserTool,
       TodoWriteTool,
       TodoReadTool,
+      TodoUpdateTool,
+      TodoDeleteTool,
       SubAgentTool
     ];
     SUB_AGENT_TOOLS = ALL_TOOLS.filter((t2) => t2.name !== "SubAgent");
@@ -58641,7 +58694,7 @@ async function handleSlashCommand(cmd, _state, setState, exit) {
       setState((s2) => ({ ...s2, info: "\u23F3 \u6B63\u5728\u68C0\u67E5\u66F4\u65B0..." }));
       {
         const { checkForUpdates: checkForUpdates2 } = await Promise.resolve().then(() => (init_updater(), updater_exports));
-        const VERSION3 = "1.4.8";
+        const VERSION3 = "1.4.9";
         const info = await checkForUpdates2(VERSION3);
         if (!info.hasUpdate) {
           setState((s2) => ({ ...s2, info: `\u2705 \u5DF2\u662F\u6700\u65B0\u7248\u672C v${info.latestVersion}` }));
@@ -58777,7 +58830,7 @@ init_prompts();
 init_session();
 init_loop();
 init_cwd();
-var VERSION2 = "1.4.8";
+var VERSION2 = "1.4.9";
 async function silentUpdateCheck() {
   try {
     const info = await checkForUpdates(VERSION2);

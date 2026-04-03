@@ -8,7 +8,7 @@ import { LSTool } from './LSTool/index.js'
 import { WebFetchTool } from './WebFetchTool/index.js'
 import { WebSearchTool } from './WebSearchTool/index.js'
 import { AskUserTool } from './AskUserTool/index.js'
-import { TodoWriteTool, TodoReadTool } from './TodoWriteTool/index.js'
+import { TodoWriteTool, TodoReadTool, TodoUpdateTool, TodoDeleteTool } from './TodoWriteTool/index.js'
 import { SubAgentTool } from './SubAgentTool/index.js'
 import { buildToolSchema } from './base.js'
 import type { ToolDef } from './base.js'
@@ -27,6 +27,8 @@ export const ALL_TOOLS: ToolDef[] = [
   AskUserTool,
   TodoWriteTool,
   TodoReadTool,
+  TodoUpdateTool,
+  TodoDeleteTool,
   SubAgentTool,
 ]
 
@@ -57,6 +59,8 @@ export {
   AskUserTool,
   TodoWriteTool,
   TodoReadTool,
+  TodoUpdateTool,
+  TodoDeleteTool,
   SubAgentTool,
 }
 export type { ToolDef, ToolContext, ToolResult } from './base.js'
