@@ -56742,8 +56742,8 @@ var init_FileEditTool = __esm({
             };
           }
           try {
-            const { mkdirSync: mkdirSync5 } = await import("fs");
-            mkdirSync5(path2.dirname(filePath), { recursive: true });
+            const { mkdirSync: mkdirSync7 } = await import("fs");
+            mkdirSync7(path2.dirname(filePath), { recursive: true });
             writeFileSync2(filePath, input.new_string, "utf8");
             return { content: `Created file: ${input.file_path}` };
           } catch (err) {
@@ -57458,28 +57458,312 @@ Note: File operations should now target "${worktreeDir}" instead of the main wor
   }
 });
 
-// src/tools/TodoWriteTool/index.ts
+// src/tools/CronTool/index.ts
+var CronTool_exports = {};
+__export(CronTool_exports, {
+  CronCreateTool: () => CronCreateTool,
+  CronDeleteTool: () => CronDeleteTool,
+  CronListTool: () => CronListTool,
+  restoreJobs: () => restoreJobs,
+  startJob: () => startJob,
+  stopJob: () => stopJob
+});
 import { readFileSync as readFileSync5, writeFileSync as writeFileSync4, existsSync as existsSync8, mkdirSync as mkdirSync3 } from "fs";
-import { homedir as homedir2 } from "os";
+import { execFile as execFile5 } from "child_process";
+import { promisify as promisify5 } from "util";
 import { join as join10 } from "path";
+import { homedir as homedir2 } from "os";
+function readJobs() {
+  try {
+    if (!existsSync8(CRON_FILE)) return [];
+    return JSON.parse(readFileSync5(CRON_FILE, "utf8"));
+  } catch {
+    return [];
+  }
+}
+function writeJobs(jobs) {
+  mkdirSync3(join10(homedir2(), ".tikat-codex"), { recursive: true });
+  writeFileSync4(CRON_FILE, JSON.stringify(jobs, null, 2), "utf8");
+}
+function parseScheduleMs(schedule) {
+  const s2 = schedule.trim().toLowerCase();
+  if (s2 === "@hourly") return 3600 * 1e3;
+  if (s2 === "@daily") return 86400 * 1e3;
+  if (s2 === "@weekly") return 7 * 86400 * 1e3;
+  const m2 = s2.match(/^@every\s+(\d+)(s|m|h|d)$/);
+  if (!m2) return null;
+  const n2 = parseInt(m2[1], 10);
+  const unit = m2[2];
+  const mult = { s: 1e3, m: 6e4, h: 36e5, d: 864e5 };
+  return n2 * (mult[unit] ?? 0);
+}
+async function runJob(job) {
+  const jobs = readJobs();
+  const idx = jobs.findIndex((j2) => j2.id === job.id);
+  if (idx === -1) return;
+  jobs[idx].lastRun = (/* @__PURE__ */ new Date()).toISOString();
+  jobs[idx].runCount++;
+  writeJobs(jobs);
+  const shell = IS_WINDOWS2 ? "cmd.exe" : "bash";
+  const shellArg = IS_WINDOWS2 ? "/c" : "-c";
+  try {
+    await execFileAsync5(shell, [shellArg, job.command], { cwd: job.cwd, timeout: 6e4 });
+  } catch {
+  }
+}
+function startJob(job) {
+  const ms = parseScheduleMs(job.schedule);
+  if (!ms) return false;
+  if (activeTimers.has(job.id)) return true;
+  const timer = setInterval(() => void runJob(job), ms);
+  if (timer.unref) timer.unref();
+  activeTimers.set(job.id, timer);
+  return true;
+}
+function stopJob(id) {
+  const timer = activeTimers.get(id);
+  if (timer) {
+    clearInterval(timer);
+    activeTimers.delete(id);
+  }
+}
+function restoreJobs(cwd2) {
+  const jobs = readJobs();
+  for (const job of jobs) {
+    startJob({ ...job, cwd: job.cwd || cwd2 });
+  }
+}
+var execFileAsync5, CRON_FILE, IS_WINDOWS2, activeTimers, createInputSchema, CronCreateTool, deleteInputSchema, CronDeleteTool, CronListTool;
+var init_CronTool = __esm({
+  "src/tools/CronTool/index.ts"() {
+    "use strict";
+    init_zod();
+    execFileAsync5 = promisify5(execFile5);
+    CRON_FILE = join10(homedir2(), ".tikat-codex", "crons.json");
+    IS_WINDOWS2 = process.platform === "win32";
+    activeTimers = /* @__PURE__ */ new Map();
+    createInputSchema = external_exports.object({
+      id: external_exports.string().describe('Unique identifier for this job (e.g. "backup", "health-check")'),
+      schedule: external_exports.string().describe(
+        'Schedule expression. Supported: "@every 30s", "@every 5m", "@every 1h", "@every 2d", "@hourly", "@daily", "@weekly"'
+      ),
+      command: external_exports.string().describe("Shell command to run on schedule"),
+      description: external_exports.string().optional().describe("Human-readable description of what this job does")
+    });
+    CronCreateTool = {
+      name: "CronCreate",
+      description: 'Create a recurring scheduled task that runs a shell command on a schedule. Jobs persist across sessions. Supported schedules: "@every 30s", "@every 5m", "@every 1h", "@every 2d", "@hourly", "@daily", "@weekly".',
+      inputSchema: createInputSchema,
+      async execute(input, context) {
+        const ms = parseScheduleMs(input.schedule);
+        if (!ms) {
+          return {
+            content: `Invalid schedule: "${input.schedule}". Use: "@every 30s", "@every 5m", "@every 1h", "@every 2d", "@hourly", "@daily", "@weekly"`,
+            isError: true
+          };
+        }
+        const jobs = readJobs();
+        if (jobs.find((j2) => j2.id === input.id)) {
+          return { content: `A cron job with id "${input.id}" already exists. Delete it first with CronDelete.`, isError: true };
+        }
+        const job = {
+          id: input.id,
+          schedule: input.schedule,
+          command: input.command,
+          cwd: context.cwd,
+          description: input.description,
+          createdAt: (/* @__PURE__ */ new Date()).toISOString(),
+          runCount: 0
+        };
+        jobs.push(job);
+        writeJobs(jobs);
+        startJob(job);
+        const intervalSec = ms / 1e3;
+        const readableInterval = intervalSec >= 86400 ? `${intervalSec / 86400}d` : intervalSec >= 3600 ? `${intervalSec / 3600}h` : intervalSec >= 60 ? `${intervalSec / 60}m` : `${intervalSec}s`;
+        return {
+          content: `\u2705 Cron job "${input.id}" created.
+Schedule: ${input.schedule} (every ${readableInterval})
+Command: ${input.command}
+` + (input.description ? `Description: ${input.description}` : "")
+        };
+      }
+    };
+    deleteInputSchema = external_exports.object({
+      id: external_exports.string().describe("ID of the cron job to delete")
+    });
+    CronDeleteTool = {
+      name: "CronDelete",
+      description: "Delete a scheduled cron job by ID. Stops it immediately and removes it from storage.",
+      inputSchema: deleteInputSchema,
+      async execute(input, _context) {
+        const jobs = readJobs();
+        const idx = jobs.findIndex((j2) => j2.id === input.id);
+        if (idx === -1) {
+          return { content: `Cron job not found: "${input.id}"`, isError: true };
+        }
+        jobs.splice(idx, 1);
+        writeJobs(jobs);
+        stopJob(input.id);
+        return { content: `\u2705 Deleted cron job "${input.id}".` };
+      }
+    };
+    CronListTool = {
+      name: "CronList",
+      description: "List all scheduled cron jobs with their schedule, command, and last run time.",
+      inputSchema: external_exports.object({}),
+      async execute(_input, _context) {
+        const jobs = readJobs();
+        if (jobs.length === 0) return { content: "No cron jobs configured." };
+        const lines = jobs.map((j2) => {
+          const active = activeTimers.has(j2.id) ? "\u25B6" : "\u23F8";
+          const last = j2.lastRun ? new Date(j2.lastRun).toLocaleString() : "never";
+          return [
+            `${active} [${j2.id}] ${j2.schedule}`,
+            `   Command: ${j2.command}`,
+            `   Last run: ${last}  |  Run count: ${j2.runCount}`,
+            j2.description ? `   ${j2.description}` : ""
+          ].filter(Boolean).join("\n");
+        });
+        return { content: lines.join("\n\n") };
+      }
+    };
+  }
+});
+
+// src/tools/SkillTool/index.ts
+import { readdirSync as readdirSync3, readFileSync as readFileSync6, writeFileSync as writeFileSync5, existsSync as existsSync9, mkdirSync as mkdirSync4 } from "fs";
+import { join as join11, basename as basename2, extname as extname2 } from "path";
+import { homedir as homedir3 } from "os";
+function ensureSkillsDir() {
+  mkdirSync4(SKILLS_DIR, { recursive: true });
+}
+function listSkills() {
+  ensureSkillsDir();
+  try {
+    return readdirSync3(SKILLS_DIR).filter((f2) => extname2(f2) === ".md").map((f2) => basename2(f2, ".md"));
+  } catch {
+    return [];
+  }
+}
+function readSkill(name) {
+  const filePath = join11(SKILLS_DIR, `${name}.md`);
+  try {
+    if (!existsSync9(filePath)) return null;
+    return readFileSync6(filePath, "utf8");
+  } catch {
+    return null;
+  }
+}
+var SKILLS_DIR, runInputSchema, SkillTool, SkillListTool, createInputSchema2, SkillCreateTool;
+var init_SkillTool = __esm({
+  "src/tools/SkillTool/index.ts"() {
+    "use strict";
+    init_zod();
+    SKILLS_DIR = join11(homedir3(), ".tikat-codex", "skills");
+    runInputSchema = external_exports.object({
+      name: external_exports.string().describe("Name of the skill to execute (without .md extension)"),
+      task: external_exports.string().optional().describe("The specific task or context to apply the skill to. If omitted, returns the skill content for guidance.")
+    });
+    SkillTool = {
+      name: "Skill",
+      description: "Load and apply a user-defined skill. Skills are Markdown files in ~/.tikat-codex/skills/. Each skill provides specialized instructions or workflows. Use SkillList to see available skills. The skill content is returned as a guidance block for you to follow.",
+      inputSchema: runInputSchema,
+      async execute(input, _context) {
+        const content = readSkill(input.name);
+        if (!content) {
+          const available = listSkills();
+          return {
+            content: `Skill "${input.name}" not found in ${SKILLS_DIR}.
+` + (available.length > 0 ? `Available skills: ${available.join(", ")}` : `No skills found. Create a .md file in ${SKILLS_DIR} to define a skill.`),
+            isError: true
+          };
+        }
+        const header = `# Skill: ${input.name}
+
+`;
+        const taskSection = input.task ? `
+
+---
+**Current task:** ${input.task}
+
+Follow the skill instructions above to complete this task.` : "\n\n---\nNo specific task provided. Use the skill instructions as guidance for the current context.";
+        return { content: header + content.trim() + taskSection };
+      }
+    };
+    SkillListTool = {
+      name: "SkillList",
+      description: `List all available skills from ${SKILLS_DIR}. Returns skill names and first-line descriptions.`,
+      inputSchema: external_exports.object({}),
+      async execute(_input, _context) {
+        const skills = listSkills();
+        if (skills.length === 0) {
+          return {
+            content: `No skills found. Create .md files in ${SKILLS_DIR} to define skills.
+
+Example: Create ~/.tikat-codex/skills/code-review.md with instructions for code review.`
+          };
+        }
+        const lines = skills.map((name) => {
+          const content = readSkill(name) ?? "";
+          const firstLine = content.split("\n").find((l2) => l2.trim() && !l2.startsWith("#"))?.trim();
+          const heading = content.match(/^#\s+(.+)/m)?.[1]?.trim();
+          const desc = heading ?? firstLine ?? "(no description)";
+          return `\u2022 ${name}: ${desc}`;
+        });
+        return { content: `Available skills (${skills.length}):
+${lines.join("\n")}
+
+Use Skill tool with name to execute.` };
+      }
+    };
+    createInputSchema2 = external_exports.object({
+      name: external_exports.string().describe("Name for the skill (used as filename, no spaces or .md extension)"),
+      content: external_exports.string().describe("Markdown content defining the skill instructions")
+    });
+    SkillCreateTool = {
+      name: "SkillCreate",
+      description: `Create a new skill file in ${SKILLS_DIR}. Use Markdown to define instructions, steps, or domain knowledge. Skills can be invoked later with the Skill tool.`,
+      inputSchema: createInputSchema2,
+      async execute(input, _context) {
+        const safeName = input.name.replace(/[/\\]/g, "").replace(/\.md$/i, "").trim();
+        if (!safeName) {
+          return { content: "Invalid skill name.", isError: true };
+        }
+        ensureSkillsDir();
+        const filePath = join11(SKILLS_DIR, `${safeName}.md`);
+        try {
+          writeFileSync5(filePath, input.content, "utf8");
+          return { content: `\u2705 Skill "${safeName}" created at ${filePath}` };
+        } catch (err) {
+          return { content: `Failed to create skill: ${String(err)}`, isError: true };
+        }
+      }
+    };
+  }
+});
+
+// src/tools/TodoWriteTool/index.ts
+import { readFileSync as readFileSync7, writeFileSync as writeFileSync6, existsSync as existsSync10, mkdirSync as mkdirSync5 } from "fs";
+import { homedir as homedir4 } from "os";
+import { join as join12 } from "path";
 function readTodos() {
   try {
-    if (!existsSync8(TODO_FILE)) return [];
-    return JSON.parse(readFileSync5(TODO_FILE, "utf8"));
+    if (!existsSync10(TODO_FILE)) return [];
+    return JSON.parse(readFileSync7(TODO_FILE, "utf8"));
   } catch {
     return [];
   }
 }
 function writeTodos(todos) {
-  mkdirSync3(join10(homedir2(), ".tikat-codex"), { recursive: true });
-  writeFileSync4(TODO_FILE, JSON.stringify(todos, null, 2), "utf8");
+  mkdirSync5(join12(homedir4(), ".tikat-codex"), { recursive: true });
+  writeFileSync6(TODO_FILE, JSON.stringify(todos, null, 2), "utf8");
 }
-var TODO_FILE, todoItemSchema, writeInputSchema, TodoWriteTool, TodoReadTool, updateInputSchema, TodoUpdateTool, deleteInputSchema, TodoDeleteTool;
+var TODO_FILE, todoItemSchema, writeInputSchema, TodoWriteTool, TodoReadTool, updateInputSchema, TodoUpdateTool, deleteInputSchema2, TodoDeleteTool;
 var init_TodoWriteTool = __esm({
   "src/tools/TodoWriteTool/index.ts"() {
     "use strict";
     init_zod();
-    TODO_FILE = join10(homedir2(), ".tikat-codex", "todos.json");
+    TODO_FILE = join12(homedir4(), ".tikat-codex", "todos.json");
     todoItemSchema = external_exports.object({
       id: external_exports.string(),
       content: external_exports.string(),
@@ -57552,13 +57836,13 @@ var init_TodoWriteTool = __esm({
         }
       }
     };
-    deleteInputSchema = external_exports.object({
+    deleteInputSchema2 = external_exports.object({
       id: external_exports.string().describe("The ID of the todo to delete")
     });
     TodoDeleteTool = {
       name: "TodoDelete",
       description: "Delete a single todo item by ID.",
-      inputSchema: deleteInputSchema,
+      inputSchema: deleteInputSchema2,
       async execute(input, _context) {
         const todos = readTodos();
         const before = todos.length;
@@ -57791,6 +58075,8 @@ var init_tools = __esm({
     init_AskUserTool();
     init_PlanModeTool();
     init_WorktreeTool();
+    init_CronTool();
+    init_SkillTool();
     init_TodoWriteTool();
     init_SubAgentTool();
     init_base2();
@@ -57813,6 +58099,12 @@ var init_tools = __esm({
       ExitPlanModeTool,
       EnterWorktreeTool,
       ExitWorktreeTool,
+      CronCreateTool,
+      CronDeleteTool,
+      CronListTool,
+      SkillTool,
+      SkillListTool,
+      SkillCreateTool,
       SubAgentTool
     ];
     SUB_AGENT_TOOLS = ALL_TOOLS.filter((t2) => t2.name !== "SubAgent");
@@ -58285,11 +58577,11 @@ async function diagnoseCommand() {
     }
   }
   try {
-    const { existsSync: existsSync10, mkdirSync: mkdirSync5 } = await import("fs");
-    const { homedir: homedir4 } = await import("os");
-    const { join: join12 } = await import("path");
-    const configDir = join12(homedir4(), ".tikat-codex");
-    if (!existsSync10(configDir)) mkdirSync5(configDir, { recursive: true, mode: 448 });
+    const { existsSync: existsSync12, mkdirSync: mkdirSync7 } = await import("fs");
+    const { homedir: homedir6 } = await import("os");
+    const { join: join14 } = await import("path");
+    const configDir = join14(homedir6(), ".tikat-codex");
+    if (!existsSync12(configDir)) mkdirSync7(configDir, { recursive: true, mode: 448 });
     results.push({ label: "\u914D\u7F6E\u76EE\u5F55\u53EF\u5199", ok: true, detail: configDir });
   } catch (err) {
     results.push({ label: "\u914D\u7F6E\u76EE\u5F55\u53EF\u5199", ok: false, detail: String(err) });
@@ -58314,16 +58606,16 @@ var init_diagnose = __esm({
 });
 
 // src/utils/sessions/index.ts
-import { existsSync as existsSync9, mkdirSync as mkdirSync4, readFileSync as readFileSync6, writeFileSync as writeFileSync5, readdirSync as readdirSync3, unlinkSync as unlinkSync2 } from "fs";
-import { homedir as homedir3 } from "os";
-import { join as join11 } from "path";
+import { existsSync as existsSync11, mkdirSync as mkdirSync6, readFileSync as readFileSync8, writeFileSync as writeFileSync7, readdirSync as readdirSync4, unlinkSync as unlinkSync2 } from "fs";
+import { homedir as homedir5 } from "os";
+import { join as join13 } from "path";
 function ensureSessionsDir() {
-  if (!existsSync9(SESSIONS_DIR)) {
-    mkdirSync4(SESSIONS_DIR, { recursive: true, mode: 448 });
+  if (!existsSync11(SESSIONS_DIR)) {
+    mkdirSync6(SESSIONS_DIR, { recursive: true, mode: 448 });
   }
 }
 function sessionFile(id) {
-  return join11(SESSIONS_DIR, `${id}.json`);
+  return join13(SESSIONS_DIR, `${id}.json`);
 }
 function generateId() {
   return (/* @__PURE__ */ new Date()).toISOString().replace(/[:.]/g, "-").slice(0, 23);
@@ -58340,9 +58632,9 @@ function saveSession(id, history, model) {
   const sessionId = id ?? generateId();
   const filePath = sessionFile(sessionId);
   let createdAt = now;
-  if (id && existsSync9(filePath)) {
+  if (id && existsSync11(filePath)) {
     try {
-      const existing = JSON.parse(readFileSync6(filePath, "utf8"));
+      const existing = JSON.parse(readFileSync8(filePath, "utf8"));
       createdAt = existing.createdAt;
     } catch {
     }
@@ -58356,26 +58648,26 @@ function saveSession(id, history, model) {
     model
   };
   const session = { ...meta, history };
-  writeFileSync5(filePath, JSON.stringify(session, null, 2), { encoding: "utf8", mode: 384 });
+  writeFileSync7(filePath, JSON.stringify(session, null, 2), { encoding: "utf8", mode: 384 });
   pruneOldSessions();
   return meta;
 }
 function loadSession(id) {
   const filePath = sessionFile(id);
-  if (!existsSync9(filePath)) return null;
+  if (!existsSync11(filePath)) return null;
   try {
-    return JSON.parse(readFileSync6(filePath, "utf8"));
+    return JSON.parse(readFileSync8(filePath, "utf8"));
   } catch {
     return null;
   }
 }
 function listSessions() {
-  if (!existsSync9(SESSIONS_DIR)) return [];
-  const files = readdirSync3(SESSIONS_DIR).filter((f2) => f2.endsWith(".json"));
+  if (!existsSync11(SESSIONS_DIR)) return [];
+  const files = readdirSync4(SESSIONS_DIR).filter((f2) => f2.endsWith(".json"));
   const sessions = [];
   for (const file of files) {
     try {
-      const raw = JSON.parse(readFileSync6(join11(SESSIONS_DIR, file), "utf8"));
+      const raw = JSON.parse(readFileSync8(join13(SESSIONS_DIR, file), "utf8"));
       sessions.push({
         id: raw.id,
         title: raw.title,
@@ -58391,7 +58683,7 @@ function listSessions() {
 }
 function deleteSession(id) {
   const filePath = sessionFile(id);
-  if (!existsSync9(filePath)) return false;
+  if (!existsSync11(filePath)) return false;
   try {
     unlinkSync2(filePath);
     return true;
@@ -58410,8 +58702,8 @@ var CONFIG_DIR2, SESSIONS_DIR, MAX_SESSIONS;
 var init_sessions2 = __esm({
   "src/utils/sessions/index.ts"() {
     "use strict";
-    CONFIG_DIR2 = join11(homedir3(), ".tikat-codex");
-    SESSIONS_DIR = join11(CONFIG_DIR2, "sessions");
+    CONFIG_DIR2 = join13(homedir5(), ".tikat-codex");
+    SESSIONS_DIR = join13(CONFIG_DIR2, "sessions");
     MAX_SESSIONS = 20;
   }
 });
@@ -58634,6 +58926,8 @@ __export(repl_exports, {
   launchRepl: () => launchRepl
 });
 async function launchRepl(opts = {}) {
+  const { restoreJobs: restoreJobs2 } = await Promise.resolve().then(() => (init_CronTool(), CronTool_exports));
+  restoreJobs2(getCwd());
   const { waitUntilExit } = render_default(import_react25.default.createElement(ReplApp, opts));
   await waitUntilExit();
 }
@@ -58882,7 +59176,7 @@ async function handleSlashCommand(cmd, _state, setState, exit) {
       setState((s2) => ({ ...s2, info: "\u23F3 \u6B63\u5728\u68C0\u67E5\u66F4\u65B0..." }));
       {
         const { checkForUpdates: checkForUpdates2 } = await Promise.resolve().then(() => (init_updater(), updater_exports));
-        const VERSION3 = "1.5.1";
+        const VERSION3 = "1.5.2";
         const info = await checkForUpdates2(VERSION3);
         if (!info.hasUpdate) {
           setState((s2) => ({ ...s2, info: `\u2705 \u5DF2\u662F\u6700\u65B0\u7248\u672C v${info.latestVersion}` }));
@@ -59018,7 +59312,7 @@ init_prompts();
 init_session();
 init_loop();
 init_cwd();
-var VERSION2 = "1.5.1";
+var VERSION2 = "1.5.2";
 async function silentUpdateCheck() {
   try {
     const info = await checkForUpdates(VERSION2);

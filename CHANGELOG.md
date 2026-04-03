@@ -4,6 +4,18 @@
 
 ---
 
+## [1.5.2] - 2026-04-03
+
+### 新增
+- **CronCreate / CronDelete / CronList 工具**：轻量定时任务管理。支持 `@every 30s/5m/1h/2d`、`@hourly`、`@daily`、`@weekly` 调度格式，任务持久化到 `~/.tikat-codex/crons.json`，REPL 启动时自动恢复
+- **Skill / SkillList / SkillCreate 工具**：用户自定义技能系统。技能为 `~/.tikat-codex/skills/<name>.md` Markdown 文件，执行时内容以指令块形式返回给模型执行
+
+### 技术
+- REPL 启动时调用 `restoreJobs(cwd)` 重新注册所有持久化 cron jobs
+- `setInterval` timer 调用 `.unref()` 确保不阻止 Node 进程退出
+
+---
+
 ## [1.5.1] - 2026-04-03
 
 ### 新增

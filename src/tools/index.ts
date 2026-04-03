@@ -10,6 +10,8 @@ import { WebSearchTool } from './WebSearchTool/index.js'
 import { AskUserTool } from './AskUserTool/index.js'
 import { EnterPlanModeTool, ExitPlanModeTool } from './PlanModeTool/index.js'
 import { EnterWorktreeTool, ExitWorktreeTool } from './WorktreeTool/index.js'
+import { CronCreateTool, CronDeleteTool, CronListTool } from './CronTool/index.js'
+import { SkillTool, SkillListTool, SkillCreateTool } from './SkillTool/index.js'
 import { TodoWriteTool, TodoReadTool, TodoUpdateTool, TodoDeleteTool } from './TodoWriteTool/index.js'
 import { SubAgentTool } from './SubAgentTool/index.js'
 import { buildToolSchema } from './base.js'
@@ -35,6 +37,12 @@ export const ALL_TOOLS: ToolDef[] = [
   ExitPlanModeTool,
   EnterWorktreeTool,
   ExitWorktreeTool,
+  CronCreateTool,
+  CronDeleteTool,
+  CronListTool,
+  SkillTool,
+  SkillListTool,
+  SkillCreateTool,
   SubAgentTool,
 ]
 
@@ -71,6 +79,12 @@ export {
   ExitPlanModeTool,
   EnterWorktreeTool,
   ExitWorktreeTool,
+  CronCreateTool,
+  CronDeleteTool,
+  CronListTool,
+  SkillTool,
+  SkillListTool,
+  SkillCreateTool,
   SubAgentTool,
 }
 export type { ToolDef, ToolContext, ToolResult } from './base.js'

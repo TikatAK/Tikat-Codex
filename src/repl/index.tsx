@@ -17,6 +17,10 @@ interface ReplOptions {
 }
 
 export async function launchRepl(opts: ReplOptions = {}): Promise<void> {
+  // Restore persisted cron jobs on startup (fire-and-forget)
+  const { restoreJobs } = await import('../tools/CronTool/index.js')
+  restoreJobs(getCwd())
+
   const { waitUntilExit } = render(React.createElement(ReplApp, opts))
   await waitUntilExit()
 }
